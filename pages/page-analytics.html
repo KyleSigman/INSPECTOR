@@ -1,0 +1,181 @@
+<!-- pages/page-analytics.html -->
+
+<h2>📈 Аналитика</h2>
+
+<div class="analytics-dashboard">
+  <!-- Карты метрик -->
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <div class="metric-value" id="totalItems">0</div>
+      <div class="metric-label">Всего изделий</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-value" id="totalInspections">0</div>
+      <div class="metric-label">Проверок</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-value" id="totalNCR">0</div>
+      <div class="metric-label">Актов NCR</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-value" id="defectRate">0%</div>
+      <div class="metric-label">Уровень брака</div>
+    </div>
+  </div>
+
+  <!-- Графики -->
+  <div class="charts-grid">
+    <div class="chart-container">
+      <h3>📊 Динамика качества по месяцам</h3>
+      <canvas id="qualityTrendChart"></canvas>
+    </div>
+    
+    <div class="chart-container">
+      <h3>🔧 Типы дефектов</h3>
+      <canvas id="defectsByTypeChart"></canvas>
+    </div>
+    
+    <div class="chart-container">
+      <h3>🏭 Топ предприятий по NCR</h3>
+      <canvas id="companiesByNCRChart"></canvas>
+    </div>
+    
+    <div class="chart-container">
+      <h3>👷 Топ инспекторов</h3>
+      <canvas id="inspectorsChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Экспорт -->
+  <div class="export-section">
+    <h3>📤 Экспорт отчетов</h3>
+    <div class="export-buttons">
+      <button onclick="exportReport('pdf')" class="export-btn pdf">
+        🖨️ PDF Отчет
+      </button>
+      <button onclick="exportReport('excel')" class="export-btn excel">
+        📊 Excel
+      </button>
+      <button onclick="exportReport('csv')" class="export-btn csv">
+        💾 CSV
+      </button>
+    </div>
+  </div>
+</div>
+
+<style>
+.analytics-dashboard {
+  position: absolute;
+  width: 100%;
+  /* max-width: 1200px; */
+  margin: 10px;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px;
+  margin: 10px 0;
+}
+
+.metric-card {
+  background: #f8f9fa;
+  position: relative;
+  left: -10px;
+  width: 60%;
+  padding: 10px;
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.metric-value {
+  font-size: 2em;
+  font-weight: bold;
+  color: #007bff;
+}
+
+.metric-label {
+  color: #666;
+  margin-top: 5px;
+}
+
+.charts-grid {
+  position: relative;
+  width: 95%;
+  margin-left: 0;
+  left: -20px;
+  display: flex;
+  flex-direction: column;
+  background-color: rgba(238, 238, 238, 0);
+
+}
+
+.chart-container {
+  position: relative;
+  left: 0; margin-left: 0;
+  width: 90%;
+  background: rgb(255, 255, 255);
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  margin-bottom: 20px;
+  
+}
+
+.chart-container h3 {
+  margin-top: 0;
+  color: #333;
+}
+
+/* ВАЖНО: Задаем размеры canvas */
+.chart-container canvas {
+  width: 100% !important;
+  height: auto;
+  /* height: 300px !important; */
+  max-width: 100%;
+}
+
+
+.export-section {
+  background: #e9ecef;
+  padding: 20px;
+  border-radius: 8px;
+  margin: 30px 0;
+}
+
+.export-buttons {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.export-btn {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+
+.export-btn.pdf {
+  background: #dc3545;
+  color: white;
+}
+
+.export-btn.excel {
+  background: #28a745;
+  color: white;
+}
+
+.export-btn.csv {
+  background: #007bff;
+  color: white;
+}
+
+.export-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+</style>

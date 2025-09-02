@@ -1,0 +1,26 @@
+<!-- pages/page-add-item.html -->
+
+<h2>➕ Добавить изделие</h2>
+
+<select id="productType" onchange="loadTemplate()">
+  <option value="Труба">Труба</option>
+  <option value="Фланец">Фланец</option>
+  <option value="Задвижка">Задвижка</option>
+  <option value="Клапан предохранительный">Клапан предохранительный</option>
+  <option value="Резервуар вертикальный">Резервуар вертикальный</option>
+  <option value="Насос центробежный">Насос центробежный</option>
+  <option value="Компрессор поршневой">Компрессор поршневой</option>
+  <option value="Теплообменник">Теплообменник</option>
+  <option value="Редуктор">Редуктор</option>
+  <option value="Фильтр">Фильтр</option>
+</select>
+
+<div id="paramsForm">
+
+</div>
+<br>
+<button onclick="addItem()"
+style="margin-left: 10px;"
+>Добавить изделие</button>
+<div id="itemResult"></div>
+

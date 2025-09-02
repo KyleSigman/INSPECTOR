@@ -1,0 +1,6 @@
+{
+    "Задвижка не прошла УЗК": "The gate valve failed ultrasonic testing",
+    "Требуется проверка сварного шва": "Weld seam inspection required",
+    "Гидроиспытания пройдены": "Hydrostatic tests passed",
+    "Нет сертификата на материал": "Material certificate missing"
+  }

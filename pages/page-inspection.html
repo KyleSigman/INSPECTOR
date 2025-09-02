@@ -1,0 +1,64 @@
+<!-- pages/page-inspection.html -->
+
+<h2>🔍 Добавить проверку</h2>
+
+<!-- ✅ УБРАЛИ дублирующий input -->
+
+<!-- Выбор изделия из списка -->
+<div class="input-group">
+  <label>Выберите изделие:
+    <select id="inspectionItemId">
+      <option value="">-- Загрузка списка... --</option>
+    </select>
+  </label>
+  <button style="left:0px; top: 0px; margin-top:0p; position: relative;"   onclick="loadItemsForInspection()">🔄 Обновить список</button>
+</div>
+
+<div class="input-group">
+  <label>Тип проверки:
+    <select id="inspectionType">
+      <option value="УЗК">УЗК (ультразвук)</option>
+      <option value="ВИК">ВИК (визуальный)</option>
+      <option value="ГИ">Гидроиспытания</option>
+      <option value="РК">Радиографический контроль</option>
+      <option value="ТО">Термообработка</option>
+      <option value="МПК">Магнитопорошковый контроль</option>
+    </select>
+  </label>
+</div>
+
+<div class="input-group">
+  <label>Результат:
+    <select id="inspectionResult">
+      <option value="OK">OK</option>
+      <option value="Брак">Брак</option>
+      <option value="На доработку">На доработку</option>
+    </select>
+  </label>
+</div>
+
+<div class="input-group">
+  <label>Дефект (если есть): 
+    <input type="text" id="inspectionDefect" placeholder="Описание дефекта">
+  </label>
+</div>
+
+<div class="input-group">
+  <label>Инспектор: 
+    <input type="text" id="inspectorName" value="Иванов">
+  </label>
+</div>
+
+<div class="input-group">
+  <label>Дата: 
+    <input type="date" id="inspectionDate">
+  </label>
+</div>
+
+<button style="left:0px; top: 0px; margin-top:5p; position: relative;"  onclick="addInspection()">Добавить проверку</button>
+<div id="inspectionResult"></div>
+
+<hr>
+
+<h3>Последние проверки</h3>
+<div id="recentInspections"></div>

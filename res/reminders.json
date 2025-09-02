@@ -1,0 +1,4 @@
+{
+    "welder_cert_expiry": "Сертификат сварщика {name} истекает {date}",
+    "inspection_due": "Требуется проверка {type} для {item} до {date}"
+  }

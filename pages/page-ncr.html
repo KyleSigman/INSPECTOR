@@ -1,0 +1,66 @@
+<!-- pages/page-ncr.html -->
+
+<h2>📝 Создать NCR</h2>
+
+<div class="input-group">
+  <label>Выберите изделие:
+    <select id="ncrItemId">
+      <option value="">-- Загрузка списка... --</option>
+    </select>
+  </label>
+  <button style="left: 0; margin: 0;" onclick="loadItemsForNCR()">🔄 Обновить</button>
+</div>
+
+<div class="input-group">
+  <label>Тип дефекта:
+    <select id="ncrType">
+      <option value="Сварка">Сварка</option>
+      <option value="Материал">Материал</option>
+      <option value="Геометрия">Геометрия</option>
+      <option value="Поверхность">Поверхность</option>
+      <option value="Документация">Документация</option>
+    </select>
+  </label>
+</div>
+
+<div class="input-group">
+  <label>Критичность:
+    <select id="ncrSeverity">
+      <option value="minor">Minor (незначительный)</option>
+      <option value="major">Major (существенный)</option>
+      <option value="critical">Critical (критический)</option>
+    </select>
+  </label>
+</div>
+
+<div class="input-group">
+  <label>Нарушенный стандарт: 
+    <input type="text" id="ncrStandard" placeholder="ГОСТ 12674-72">
+  </label>
+</div>
+
+<div class="input-group">
+  <label>Описание дефекта: 
+    <textarea id="ncrDescription" rows="3" placeholder="Подробное описание проблемы"></textarea>
+  </label>
+</div>
+
+<div class="input-group">
+  <label>Требуемое действие: 
+    <input type="text" id="ncrAction" placeholder="Что нужно сделать">
+  </label>
+</div>
+
+<div class="input-group">
+  <label>Срок устранения: 
+    <input type="date" id="ncrDeadline">
+  </label>
+</div>
+
+<button style="left: 0; margin: 0;" onclick="createNCR()">Создать NCR</button>
+<div id="ncrResult"></div>
+
+<hr>
+
+<h3>Последние NCR</h3>
+<div id="recentNCRs"></div>

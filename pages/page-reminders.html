@@ -1,0 +1,105 @@
+<!-- pages/page-reminders.html -->
+
+<h2>🔔 Напоминания</h2>
+
+<div class="reminders-container">
+  <div id="reminders-list">
+    <!-- Будут созданы динамически -->
+  </div>
+  
+  <!-- Добавить напоминание -->
+  <div class="reminder-section">
+    <h3>➕ Добавить напоминание</h3>
+    <div class="add-reminder-form">
+      <input type="text" id="reminderText" placeholder="Текст напоминания">
+      <input type="date" id="reminderDate">
+      <select id="reminderPriority">
+        <option value="planned">Плановое</option>
+        <option value="soon">Ближайшее</option>
+        <option value="urgent">Срочное</option>
+      </select>
+      <button onclick="addReminder()">Добавить</button>
+    </div>
+  </div>
+</div>
+
+<style>
+/* Твои стили */
+.reminder-card {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  margin: 10px 0;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.reminder-card.urgent {
+  background: #f8d7da;
+  border-left: 5px solid #dc3545;
+}
+
+.reminder-card.soon {
+  background: #fff3cd;
+  border-left: 5px solid #ffc107;
+}
+
+.reminder-card.planned {
+  background: #d1ecf1;
+  border-left: 5px solid #0dcaf0;
+}
+
+.reminder-icon {
+  font-size: 1.5em;
+  margin-right: 15px;
+}
+
+.reminder-content {
+  flex: 1;
+}
+
+.reminder-text {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.reminder-date {
+  color: #666;
+  font-size: 0.9em;
+}
+
+.reminder-action {
+  padding: 8px 15px;
+  border: none;
+  border-radius: 5px;
+  background: #007bff;
+  color: white;
+  cursor: pointer;
+}
+
+.add-reminder-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.add-reminder-form input, 
+.add-reminder-form select, 
+.add-reminder-form button {
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.add-reminder-form button {
+  background: #28a745;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+</style>
+
+<script src="pages/page-reminders.js"></script>

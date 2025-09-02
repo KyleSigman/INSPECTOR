@@ -1,0 +1,69 @@
+<h2>📎 Проверка комплектности</h2>
+<select id="productTypeChecklist" onchange="updateChecklistHint()">
+  <option value="Труба">Труба</option>
+  <option value="Фланец">Фланец</option>
+  <option value="Задвижка">Задвижка</option>
+  <option value="Клапан предохранительный">Клапан предохранительный</option>
+  <option value="Резервуар вертикальный">Резервуар вертикальный</option>
+  <option value="Насос центробежный">Насос центробежный</option>
+  <option value="Компрессор поршневой">Компрессор поршневой</option>
+  <option value="Теплообменник">Теплообменник</option>
+  <option value="Редуктор">Редуктор</option>
+  <option value="Фильтр">Фильтр</option>
+</select>
+
+<!-- <select id="productTypeChecklist">
+  <option value="Труба">Труба</option>
+  <option value="Фланец">Фланец</option>
+  <option value="Задвижка 30с941нж">Задвижка 30с941нж</option>
+</select> -->
+<button style="left:0px; top: 0px; margin-top: 5px; position: relative;" onclick="checkDocs()">Проверить комплектность</button>
+
+<div id="checklistResult"></div>
+
+<hr>
+
+<h3>📤 Добавить документ к изделию</h3>
+<div class="input-group">
+  <label>ID изделия: 
+    <input type="text" id="itemIdForDoc" placeholder="ITEM-ZAD-100-16-12345">
+  </label>
+</div>
+
+<div class="input-group">
+  <label>Название документа: 
+    <input type="text" id="docName" placeholder="Паспорт, УЗК, ГИ и т.д.">
+  </label>
+</div>
+
+<div class="input-group">
+  <label>Файл документа: 
+    <input type="file" id="docFile" accept=".pdf,.jpg,.jpeg,.png,.docx,.xlsx" onchange="autoFillDocName()">
+  </label>
+</div>
+
+<!-- ✅ Одна кнопка - сохраняем только имя -->
+<button style="left:0px; top: 0px; margin-top: 5px; position: relative;" onclick="addDocumentToLocal()">➕ Добавить документ</button>
+<div id="uploadResult"></div>
+
+<hr>
+
+<!-- НА ЭТО: -->
+<h3>🔍 Проверить по ID изделия</h3>
+<div class="input-group">
+  <label>Введите ID: 
+    <input type="text" id="itemIdForDocsList" placeholder="ITEM-ZAD-100-16-12345" oninput="debouncedShowItem()">
+  </label>
+</div>
+<div id="itemDocumentsList"></div>
+<!-- <h3>📂 Документы изделия</h3>
+<div class="input-group">
+  <label>Введите ID изделия: 
+    <input type="text" id="itemIdForDocsList" placeholder="ITEM-ZAD-100-16-12345" oninput="showItemDocuments()">
+  </label>
+</div>
+<div id="itemDocumentsList"></div> -->
+
+<!-- <div id="itemDocumentsList"></div> -->
+
+<script src="pages/page-checklist.js"></script>

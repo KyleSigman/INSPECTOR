@@ -1,0 +1,124 @@
+<!-- <h2>📏 Допуск по ГОСТ 25346</h2>
+<div class="input-group">
+  <input type="number" id="size" placeholder="Размер, мм" step="0.001">
+</div>
+<div class="input-group">
+  <select id="fit" onchange="updateRange()">
+    <option value="h7">h7</option>
+    <option value="H8">H8</option>
+    <option value="k6">k6</option>
+  </select>
+</div>
+<button onclick="calculate()">Показать допуск</button>
+<div id="result"></div>
+<button id="showTableBtn" onclick="showTable()" style="display:none">Показать в таблице</button>
+
+<button onclick="askAIaboutTolerance()">🤖 Спросить ИИ</button>
+<div id="ai-response" style="margin-top: 15px; padding: 10px; background: #f0f8ff; border-radius: 5px; display: none; white-space: pre-wrap;"></div>
+<div id="ai-response" style="margin-top: 15px; padding: 10px; background: #f0f8ff; border-radius: 5px; display: none;"></div> -->
+
+<h2>📏 Допуск по ГОСТ 25346</h2>
+
+<div class="tolerance-calculator">
+  <!-- Входные данные -->
+  <div class="input-row">
+    <div class="input-group">
+      <label for="size">⌀ Диаметр, мм:</label>
+      <input type="number" id="size" placeholder="Например: 50" step="0.001" min="0">
+    </div>
+    
+    <div class="input-group">
+      <label for="fit">Посадка:</label>
+      <select id="fit" onchange="updateFitInfo()">
+        <option value="h7">h7 (вал, 0/-0.025)</option>
+        <option value="H8">H8 (отверстие, +0.039/0)</option>
+        <option value="k6">k6 (вал, +0.018/+0.012)</option>
+        <option value="m6">m6 (вал, +0.021/+0.013)</option>
+        <option value="f7">f7 (вал, -0.018/-0.041)</option>
+        <option value="g6">g6 (вал, -0.009/-0.025)</option>
+        <option value="H7">H7 (отверстие, +0.025/0)</option>
+        <option value="F8">F8 (отверстие, +0.043/+0.025)</option>
+      </select>
+      <!-- <select id="fit" onchange="updateFitInfo()">
+        <option value="h7">h7 (вал, 0/-0.025)</option>
+        <option value="H8">H8 (отверстие, +0.039/0)</option>
+        <option value="k6">k6 (вал, +0.018/+0.002)</option>
+      </select> -->
+    </div>
+  </div>
+
+  <!-- Информация о посадке -->
+  <div id="fit-info" class="fit-info">
+    <div class="info-badge system-badge">Система вала</div>
+    <div class="info-badge type-badge">Зазор</div>
+  </div>
+
+  <!-- Кнопка расчета -->
+  <button style="width: 80%; left: 0;" class="calculate-btn" onclick="calculate()">
+      Рассчитать допуск
+  </button>
+
+  <!-- Результаты -->
+  <div id="result" class="result-container"></div>
+
+  <!-- Детали расчета -->
+  <div id="calculation-details" class="calculation-details" style="display: none;">
+    <h4>📊 Детали расчета:</h4>
+    <div class="detail-grid">
+      <div class="detail-item">
+        <span class="detail-label">Интервал:</span>
+        <span id="interval-value" class="detail-value">30-50 мм</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">Верхнее:</span>
+        <span id="upper-value" class="detail-value">0.000 мм</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">Нижнее:</span>
+        <span id="lower-value" class="detail-value">-0.025 мм</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">Поле допуска:</span>
+        <span id="tolerance-value" class="detail-value">0.025 мм</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Кнопка таблицы -->
+  <button id="showTableBtn" onclick="showTable()" style="display:none" class="table-btn">
+    📊 Показать в таблице ГОСТ
+  </button>
+
+  <!-- Визуализация допуска -->
+  <div id="tolerance-visualization" class="tolerance-visualization" style="display: none;">
+    <h4>📐 Визуализация поля допуска:</h4>
+    <div class="tolerance-bar">
+      <div class="zero-line"></div>
+      <div class="tolerance-zone" id="tolerance-zone"></div>
+      <div class="nominal-size">⌀ Номинальный размер</div>
+    </div>
+  </div>
+
+<!-- Модальное окно для таблицы ГОСТ -->
+<div id="tableModal" class="modal-overlay" style="display: none;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>📋 Справка из ГОСТ 25346-89</h3>
+      <!-- <button class="close-btn" onclick="closeTable()">&times;</button> -->
+    </div>
+    <div class="modal-body">
+      <p><strong>Номинальный размер:</strong> <span id="refSize">—</span> мм</p>
+      <p><strong>Посадка:</strong> <span id="refFit">—</span></p>
+      <div id="referenceTable" style="margin-top: 15px; line-height: 1.6;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeTable()">Закрыть</button>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<!-- AI раздел (закомментирован как было) -->
+<!-- <button onclick="askAIaboutTolerance()">🤖 Спросить ИИ</button> -->
+<div id="ai-response" style="margin-top: 15px; padding: 10px; background: #f0f8ff; border-radius: 5px; display: none; white-space: pre-wrap;"></div>

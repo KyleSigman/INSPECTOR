@@ -1,0 +1,223 @@
+<!-- pages/page-inspector-profile.html -->
+
+<h2>👤 Профиль (превью)</h2>
+
+<!-- 📊 Общая статистика -->
+<div class="stats-overview">
+  <div class="stat-card">
+    <div class="stat-number">247</div>
+    <div class="stat-label">Проверок</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-number">12</div>
+    <div class="stat-label">NCR</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-number">4.8%</div>
+    <div class="stat-label">Брак</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-number">14 дн</div>
+    <div class="stat-label">Устранение</div>
+  </div>
+</div>
+
+<!-- 🎮 Навыки с прогрессом -->
+<h3>🎮 Навыки</h3>
+<div class="profile-stats-grid">
+  <!-- Мастер проверок -->
+  <div class="skill-card">
+    <h3>🔍 Мастер проверок</h3>
+    <div class="progress-bar">
+      <div class="progress-fill" style="width: 75%" data-level="3"></div>
+      <span class="progress-text">184/250 проверок</span>
+    </div>
+    <div class="skill-level">Уровень 3</div>
+  </div>
+
+  <!-- Мастер NCR -->
+  <div class="skill-card">
+    <h3>📝 Мастер NCR</h3>
+    <div class="progress-bar">
+      <div class="progress-fill" style="width: 60%" data-level="2"></div>
+      <span class="progress-text">12/20 NCR</span>
+    </div>
+    <div class="skill-level">Уровень 2</div>
+  </div>
+
+  <!-- Крафтмастер -->
+  <div class="skill-card">
+    <h3>🔧 Крафтмастер</h3>
+    <div class="progress-bar">
+      <div class="progress-fill" style="width: 40%" data-level="1"></div>
+      <span class="progress-text">47/120 изделий</span>
+    </div>
+    <div class="skill-level">Уровень 1</div>
+  </div>
+
+  <!-- Эксперт по стандартам -->
+  <div class="skill-card">
+    <h3>📚 Эксперт по стандартам</h3>
+    <div class="progress-bar">
+      <div class="progress-fill" style="width: 85%" data-level="4"></div>
+      <span class="progress-text">17/20 стандартов</span>
+    </div>
+    <div class="skill-level">Уровень 4</div>
+  </div>
+
+  <!-- Мастер качества -->
+  <div class="skill-card">
+    <h3>🥇 Мастер качества</h3>
+    <div class="progress-bar">
+      <div class="progress-fill" style="width: 92%" data-level="5"></div>
+      <span class="progress-text">92% без брака</span>
+    </div>
+    <div class="skill-level">Уровень 5</div>
+  </div>
+
+  <!-- Скоростной инспектор -->
+  <div class="skill-card">
+    <h3>⚡ Скоростной инспектор</h3>
+    <div class="progress-bar">
+      <div class="progress-fill" style="width: 55%" data-level="2"></div>
+      <span class="progress-text">Среднее 12 мин/проверка</span>
+    </div>
+    <div class="skill-level">Уровень 2</div>
+  </div>
+</div>
+
+<!-- 🏆 Достижения -->
+<h3>🎖 Достижения</h3>
+<div class="achievements-grid">
+  <div class="achievement unlocked" title="30 дней без брака">🏆 Без брака 30 дней</div>
+  <div class="achievement unlocked" title="100 проведенных проверок">🥇 100 проверок</div>
+  <div class="achievement unlocked" title="Эксперт по УЗК">🔍 Эксперт УЗК</div>
+  <div class="achievement locked" title="Среднее время < 10 мин">⏱️ Супер скорость</div>
+  <div class="achievement locked" title="Точность > 95%">📊 Идеальная точность</div>
+  <div class="achievement locked" title="Работал с 10 предприятиями">🏭 10 предприятий</div>
+</div>
+
+<!-- 📅 Активность -->
+<h3>📅 Активность</h3>
+<div class="activity-stats">
+  <p>📅 Подряд без брака: <strong>5 дней</strong></p>
+  <p>⏱️ Активное время: <strong>09:00-17:00</strong></p>
+  <p>🏭 Часто работает с: <strong>Нефтегазпром</strong></p>
+</div>
+
+<style>
+.stats-overview {
+  display: flex;
+  gap: 20px;
+  margin: 20px 0;
+  flex-wrap: wrap;
+}
+
+.stat-card {
+  background: #007bff;
+  color: white;
+  padding: 10px;
+  border-radius: 8px;
+  text-align: center;
+  min-width: 100px;
+}
+
+.stat-number {
+  font-size: 2em;
+  font-weight: bold;
+}
+
+.stat-label {
+  font-size: 0.9em;
+  opacity: 0.9;
+}
+
+.profile-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+  margin: 20px 0;
+}
+
+.skill-card {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+}
+
+.skill-card h3 {
+  margin: 0 0 10px 0;
+  color: #007bff;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 20px;
+  background: #e9ecef;
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+  margin: 10px 0;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #007bff, #28a745);
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 12px;
+  line-height: 20px;
+  color: white;
+  text-shadow: 1px 1px 1px rgba(0,0,0,0.5);
+}
+
+.skill-level {
+  text-align: right;
+  font-weight: bold;
+  color: #28a745;
+}
+
+.achievements-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+  margin: 20px 0;
+}
+
+.achievement {
+  padding: 10px;
+  border-radius: 5px;
+  text-align: center;
+  font-size: 0.9em;
+  cursor: help;
+}
+
+.achievement.unlocked {
+  background: #d4edda;
+  border: 1px solid #c3e6cb;
+  color: #155724;
+}
+
+.achievement.locked {
+  background: #f8f9fa;
+  border: 1px dashed #dee2e6;
+  color: #6c757d;
+}
+
+.activity-stats {
+  background: #e9ecef;
+  padding: 15px;
+  border-radius: 8px;
+  margin: 20px 0;
+}
+</style>
+
+<script src="pages/page-inspector-profile.js"></script>

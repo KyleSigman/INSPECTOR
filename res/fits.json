@@ -1,0 +1,63 @@
+{
+    "h7": [
+      { "min": 0, "max": 3, "upper": 0, "lower": -10 },
+      { "min": 3, "max": 6, "upper": 0, "lower": -12 },
+      { "min": 6, "max": 10, "upper": 0, "lower": -15 },
+      { "min": 10, "max": 18, "upper": 0, "lower": -18 },
+      { "min": 18, "max": 30, "upper": 0, "lower": -21 },
+      { "min": 30, "max": 50, "upper": 0, "lower": -25 },
+      { "min": 50, "max": 80, "upper": 0, "lower": -30 },
+      { "min": 80, "max": 120, "upper": 0, "lower": -35 }
+    ],
+    "H8": [
+      { "min": 0, "max": 3, "upper": 14, "lower": 0 },
+      { "min": 3, "max": 6, "upper": 18, "lower": 0 },
+      { "min": 6, "max": 10, "upper": 22, "lower": 0 },
+      { "min": 10, "max": 18, "upper": 27, "lower": 0 },
+      { "min": 18, "max": 30, "upper": 33, "lower": 0 },
+      { "min": 30, "max": 50, "upper": 39, "lower": 0 },
+      { "min": 50, "max": 80, "upper": 46, "lower": 0 },
+      { "min": 80, "max": 120, "upper": 54, "lower": 0 }
+    ],
+    "k6": [
+      { "min": 0, "max": 3, "upper": 6, "lower": 2 },
+      { "min": 3, "max": 6, "upper": 8, "lower": 4 },
+      { "min": 6, "max": 10, "upper": 10, "lower": 6 },
+      { "min": 10, "max": 18, "upper": 12, "lower": 8 },
+      { "min": 18, "max": 30, "upper": 15, "lower": 10 },
+      { "min": 30, "max": 50, "upper": 18, "lower": 12 }
+    ],
+    "m6": [
+      { "min": 0, "max": 3, "upper": 10, "lower": 6 },
+      { "min": 3, "max": 6, "upper": 12, "lower": 8 },
+      { "min": 6, "max": 10, "upper": 15, "lower": 11 },
+      { "min": 10, "max": 18, "upper": 18, "lower": 14 },
+      { "min": 18, "max": 30, "upper": 21, "lower": 15 },
+      { "min": 30, "max": 50, "upper": 25, "lower": 18 }
+    ],
+    "f7": [
+      { "min": 0, "max": 3, "upper": -6, "lower": -16 },
+      { "min": 3, "max": 6, "upper": -8, "lower": -20 },
+      { "min": 6, "max": 10, "upper": -9, "lower": -24 },
+      { "min": 10, "max": 18, "upper": -11, "lower": -29 },
+      { "min": 18, "max": 30, "upper": -13, "lower": -35 },
+      { "min": 30, "max": 50, "upper": -16, "lower": -42 }
+    ],
+    "H7": [
+      { "min": 0, "max": 3, "upper": 10, "lower": 0 },
+      { "min": 3, "max": 6, "upper": 12, "lower": 0 },
+      { "min": 6, "max": 10, "upper": 15, "lower": 0 },
+      { "min": 10, "max": 18, "upper": 18, "lower": 0 },
+      { "min": 18, "max": 30, "upper": 21, "lower": 0 },
+      { "min": 30, "max": 50, "upper": 25, "lower": 0 },
+      { "min": 50, "max": 80, "upper": 30, "lower": 0 }
+    ],
+    "p6": [
+      { "min": 0, "max": 3, "upper": 12, "lower": 6 },
+      { "min": 3, "max": 6, "upper": 16, "lower": 10 },
+      { "min": 6, "max": 10, "upper": 20, "lower": 14 },
+      { "min": 10, "max": 18, "upper": 24, "lower": 18 },
+      { "min": 18, "max": 30, "upper": 28, "lower": 20 },
+      { "min": 30, "max": 50, "upper": 34, "lower": 24 }
+    ]
+  }

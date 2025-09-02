@@ -1,0 +1,30 @@
+<!-- pages/page-statistics.html -->
+
+<h2>📊 Статистика по качеству</h2>
+
+<div class="input-group">
+  <label>Период:
+    <select id="statPeriod">
+      <option value="month">Последний месяц</option>
+      <option value="quarter">Последний квартал</option>
+      <option value="year">Последний год</option>
+    </select>
+  </label>
+  <button style="position: relative; left: 0;" onclick="loadStatistics()">📈 Обновить статистику</button>
+</div>
+
+<div id="statsOverview"></div>
+
+<hr>
+
+<h3>📉 Тренды</h3>
+<div id="trendChart"></div>
+
+<h3>🔧 Топ дефектов</h3>
+<div id="topDefects"></div>
+
+<h3>⚠️ Критичность</h3>
+<div id="severityChart"></div>
+
+<h3>🏭 По предприятиям</h3>
+<div id="companyStats"></div>

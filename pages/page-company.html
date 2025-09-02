@@ -1,0 +1,48 @@
+<!-- pages/page-company.html -->
+
+<h2>🏭 Добавить предприятие</h2>
+
+<div class="input-group">
+  <label>Название предприятия: 
+    <input type="text" id="companyName" placeholder="ООО Нефтегазпром">
+  </label>
+</div>
+
+<div class="input-group">
+  <label>Адрес: 
+    <input type="text" id="companyAddress" placeholder="г. Москва, ул. Промышленная, 10">
+  </label>
+</div>
+
+<div class="input-group">
+  <label>Контакт: 
+    <input type="text" id="companyContact" placeholder="+7 (495) 123-45-67">
+  </label>
+</div>
+
+<div class="input-group">
+  <label>Стандарты: 
+    <input type="text" id="companyStandards" placeholder="ГОСТ 12820, API 6A">
+  </label>
+</div>
+
+<button style="left:5px; top: 0px; position: relative;"  onclick="addCompany()">➕ Добавить предприятие</button>
+<div id="companyAddResult"></div>
+
+<hr>
+
+<h2>🏢 Список предприятий</h2>
+<div id="companiesList"></div>
+
+<hr>
+
+<h2>📈 Статистика по предприятию</h2>
+<div class="input-group">
+  <label>Выберите предприятие:
+    <select id="companyForStats">
+      <option value="">-- Загрузка... --</option>
+    </select>
+  </label>
+  <button style="left:5px; margin-top: 0px; position: relative;" onclick="loadCompanyStatistics()">📊 Показать статистику</button>
+</div>
+<div id="companyStatsResult"></div>

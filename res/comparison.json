@@ -1,0 +1,14 @@
+{
+    "API_6A_vs_GOST_12820": {
+      "sealing_radius": {
+        "API 6A": "1.5 мм min",
+        "ГОСТ 12820": "не регламентирован",
+        "conclusion": "Применять API 6A"
+      },
+      "hardness": {
+        "API 6A": "≤ 22 HRC",
+        "ГОСТ 12820": "не указан",
+        "conclusion": "API 6A строже"
+      }
+    }
+  }

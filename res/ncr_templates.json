@@ -1,0 +1,10 @@
+{
+    "general": {
+      "title": "Акт несоответствия",
+      "fields": ["item_id", "defect", "standard", "required_action"]
+    },
+    "welding": {
+      "title": "NCR: Дефект сварки",
+      "fields": ["welder_cert", "method", "location", "photo_required"]
+    }
+  }

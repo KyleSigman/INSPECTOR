@@ -1,0 +1,138 @@
+<!-- pages/page-standards.html -->
+
+<h2>📚 Поиск по стандартам</h2>
+<input type="text" id="query" placeholder="Например: твёрдость фланца API 6A">
+<button style="left:0px; top: 0px; margin-top:5px; position: relative;" onclick="searchStandard()">Найти</button>
+<div id="standardResult"></div>
+
+<!-- ✅ Добавляем справку -->
+<div id="standardsHelp" style="
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 50px;
+  background: #f8f9fa;
+  border-top: 1px solid #dee2e6;
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+  overflow: hidden;
+  transition: height 0.3s ease;
+  z-index: 1000;
+">
+  <div style="padding: 15px; cursor: pointer; font-weight: bold; font-size: 18px;" 
+       onclick="toggleStandardsHelp()">
+    📚 Популярные запросы и стандарты
+  </div>
+  <div id="helpContent" style="padding: 0 15px 15px 15px; display: none;">
+
+    <div style="margin: 10px 0;">
+        <strong style="color: #28a745;">📋 По названию стандарта:</strong>
+        <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 5px;">
+          <span class="help-tag" onclick="setQuery('фланцы')">фланцы</span>
+          <span class="help-tag" onclick="setQuery('задвижки')">задвижки</span>
+          <span class="help-tag" onclick="setQuery('трубы')">трубы</span>
+          <span class="help-tag" onclick="setQuery('резервуары')">резервуары</span>
+          <span class="help-tag" onclick="setQuery('сталь')">сталь</span>
+          <span class="help-tag" onclick="setQuery('коррозионно-стойкие')">коррозионно-стойкие</span>
+          <span class="help-tag" onclick="setQuery('H2S')">H2S</span>
+          <span class="help-tag" onclick="setQuery(' ANSI')">ANSI</span>
+        </div>
+      </div>
+
+    <div style="margin: 10px 0;">
+        <strong style="color: #007bff;">🔍 Типовые запросы:</strong>
+        <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 5px;">
+          <span class="help-tag" onclick="setQuery('hardness')">hardness</span>
+          <span class="help-tag" onclick="setQuery('radius')">radius</span>
+          <span class="help-tag" onclick="setQuery('test')">test</span>
+          <span class="help-tag" onclick="setQuery('welding')">welding</span>
+          <span class="help-tag" onclick="setQuery('pressure')">pressure</span>
+          <span class="help-tag" onclick="setQuery('h7')">h7</span>
+          <span class="help-tag" onclick="setQuery('HRC')">HRC</span>
+          <span class="help-tag" onclick="setQuery('допуск')">допуск</span>
+        </div>
+      </div>
+    <!-- <div style="margin: 10px 0;">
+      <strong style="color: #007bff;">🔍 Типовые запросы:</strong>
+      <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 5px;">
+        <span class="help-tag" onclick="setQuery('твёрдость фланца')">твёрдость фланца</span>
+        <span class="help-tag" onclick="setQuery('радиус уплотнения')">радиус уплотнения</span>
+        <span class="help-tag" onclick="setQuery('предел текучести')">предел текучести</span>
+        <span class="help-tag" onclick="setQuery('температурный диапазон')">температурный диапазон</span>
+        <span class="help-tag" onclick="setQuery('толщина стенки')">толщина стенки</span>
+        <span class="help-tag" onclick="setQuery('параметры сварки')">параметры сварки</span>
+        <span class="help-tag" onclick="setQuery('гидроиспытания')">гидроиспытания</span>
+        <span class="help-tag" onclick="setQuery('ультразвуковой контроль')">ультразвук</span>
+      </div> -->
+    </div>
+
+    <hr>
+
+    <div style="margin: 10px 0;">
+      <strong style="color: #28a745;">📋 ГОСТы:</strong>
+      <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 5px;">
+        <span class="help-tag" onclick="setQuery('ГОСТ 25346-89')">ГОСТ 25346</span>
+        <span class="help-tag" onclick="setQuery('ГОСТ 12820-80')">ГОСТ 12820</span>
+        <span class="help-tag" onclick="setQuery('ГОСТ 12674-72')">ГОСТ 12674</span>
+        <span class="help-tag" onclick="setQuery('ГОСТ 8732-78')">ГОСТ 8732</span>
+        <span class="help-tag" onclick="setQuery('ГОСТ 17198-87')">ГОСТ 17198</span>
+        <span class="help-tag" onclick="setQuery('ГОСТ 5632-72')">ГОСТ 5632</span>
+        <span class="help-tag" onclick="setQuery('ГОСТ 977-88')">ГОСТ 977</span>
+        <span class="help-tag" onclick="setQuery('ГОСТ 33259-2019')">ГОСТ 33259</span>
+      </div>
+    </div>
+
+    <hr>
+
+    <div style="margin: 10px 0;">
+      <strong style="color: #dc3545;">🌍 Международные:</strong>
+      <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 5px;">
+        <span class="help-tag" onclick="setQuery('API 6A')">API 6A</span>
+        <span class="help-tag" onclick="setQuery('API 6D')">API 6D</span>
+        <span class="help-tag" onclick="setQuery('API 5CT')">API 5CT</span>
+        <span class="help-tag" onclick="setQuery('NACE MR0175')">NACE MR0175</span>
+        <span class="help-tag" onclick="setQuery('ASME B16.5')">ASME B16.5</span>
+        <span class="help-tag" onclick="setQuery('ASTM A351')">ASTM A351</span>
+        <span class="help-tag" onclick="setQuery('EN 1024-1')">EN 1024</span>
+        <span class="help-tag" onclick="setQuery('ISO 15156')">ISO 15156</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<style>
+.help-tag {
+  background: #e9ecef;
+  padding: 5px 10px;
+  border-radius: 15px;
+  font-size: 0.9em;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.help-tag:hover {
+  background: #007bff;
+  color: white;
+}
+</style>
+
+<!-- ✅ Добавляем скрипты в самом конце -->
+<script>
+// Функции для справки
+function toggleStandardsHelp() {
+  const content = document.getElementById('helpContent');
+  const help = document.getElementById('standardsHelp');
+  if (content.style.display === 'none') {
+    content.style.display = 'block';
+    help.style.height = 'auto';
+  } else {
+    content.style.display = 'none';
+    help.style.height = '50px';
+  }
+}
+
+function setQuery(text) {
+  document.getElementById('query').value = text;
+  searchStandard();
+}
+</script>

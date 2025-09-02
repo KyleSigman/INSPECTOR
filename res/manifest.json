@@ -1,0 +1,11 @@
+{
+    "name": "knowledge-pack-v1",
+    "version": "1.0.0",
+    "created": "2024-04-05",
+    "description": "Кассета знаний для ИИ-агента инспектора",
+    "files": {
+      "tolerances": "tolerances.json",
+      "materials": "materials.json",
+      "standards": "standards.json"
+    }
+  }

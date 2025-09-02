@@ -1,0 +1,59 @@
+<!-- <h2>🧠 Умный ассистент</h2>
+<p style="font-size: 0.9em; color: #666;">Введите команду:</p>
+
+<div class="smart-input-container">
+  <input 
+    type="text" 
+    id="smartCommand" 
+    placeholder="Например: /get_item ITEM-123"
+    onkeypress="handleCommandEnter(event)"
+  >
+  <button onclick="runSmartCommand()">Выполнить</button>
+</div>
+
+<div id="smartResult" class="smart-result" style="display: none;">
+  <div id="resultContent"></div>
+  <button onclick="generatePDF()" style="margin-top: 15px;">📥 Скачать PDF</button>
+</div> -->
+
+<h2>🧠 Умный ассистент</h2>
+<p style="font-size: 0.9em; color: #666; margin-bottom: 10px;">
+  Введите команду:
+</p>
+
+<!-- Поле ввода -->
+<input 
+  type="text" 
+  id="smartCommand" 
+  placeholder="Например: /get_item ITEM-123"
+  class="smart-command-input"
+  onkeypress="handleCommandEnter(event)"
+>
+
+<!-- Кнопка выполнить -->
+<button onclick="runSmartCommand()" class="smart-run-btn">
+  Выполнить
+</button>
+
+
+<!-- Результат -->
+<div id="smartResult" class="smart-result" style="display: none;">
+  <div id="resultContent"></div>
+  <button onclick="generatePDF()" class="pdf-btn">
+    📥 Скачать PDF
+  </button>
+</div>
+
+<div style="color: cornflowerblue;">
+    #commands
+    <br>
+/get_item [ID]
+<br>
+/get_company [Название]
+<br>
+/get_ncr [ID]
+<br>
+/get_inspection [ID]
+<br>
+/show_tolerances size=[число] fit=[посадка]
+</div>
