@@ -1,0 +1,189 @@
+
+<div class="mailer-container">
+
+  <div class="mailer-header">
+    <h2>📧 Отправка отчёта</h2>
+    <!-- <p>Заполните данные и отправьте письмо клиенту</p> -->
+  </div>
+
+  <form id="mailerForm" onsubmit="sendEmail(); return false;">
+
+    <div class="form-group">
+      <label for="toEmail">Кому</label>
+      <input type="email" id="toEmail" placeholder="client@company.com" required />
+    </div>
+
+    <div class="form-group">
+      <label for="emailSubject">Тема письма</label>
+      <input type="text" id="emailSubject" placeholder="Отчёт по ВИК" required />
+    </div>
+
+    <div class="form-group">
+      <label for="emailDescription">Описание</label>
+      <textarea id="emailDescription" rows="5" placeholder="Опишите результаты осмотра или измерений..." required></textarea>
+    </div>
+
+        <!-- Поле для вставки ссылки на фото -->
+        <div class="form-group">
+          <label for="photoLink">Ссылка на фото</label>
+          <input 
+            type="url" 
+            id="photoLink" 
+            placeholder="https://example.com/photo.jpg" 
+          />
+          <small>Вставьте прямую ссылку на изображение (JPG, PNG)</small>
+        </div>
+
+    <!-- <div class="form-group">
+      <label for="photoInput">Фото</label>
+      <input type="file" id="photoInput" accept="image/*" />
+      <div id="preview"></div>
+    </div> -->
+
+    <div class="form-group">
+      <label for="templateSelect">Тип отчёта</label>
+      <select id="templateSelect">
+        <option value="vik">ВИК — Визуальный контроль</option>
+        <option value="kv">Квалитет / Точность</option>
+        <option value="common">Общий отчёт</option>
+      </select>
+    </div>
+
+    <button type="submit" class="btn-send">📤 Отправить письмо</button>
+    <div id="status"></div>
+
+  </form>
+</div>
+<style>
+  .mailer-container {
+    position: relative;
+    width: 97%;
+    left: -5%;
+    margin: 10px auto;
+    padding: 20px;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    color: #333;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  }
+
+  .mailer-header {
+    margin-bottom: 20px;
+  }
+
+  .mailer-header h2 {
+    margin: 0;
+    color: #4a6fa5;
+    font-size: 1.5em;
+  }
+
+  .mailer-header p {
+    margin: 8px 0 0;
+    color: #666;
+    font-size: 0.9em;
+  }
+
+  .form-group {
+    margin-bottom: 16px;
+  }
+
+  .form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: bold;
+    color: #444;
+  }
+
+  .form-group input,
+  .form-group textarea,
+  .form-group select {
+    width: 95%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: border 0.2s;
+  }
+
+  .form-group input:focus,
+  .form-group textarea:focus,
+  .form-group select:focus {
+    border-color: #4a6fa5;
+    outline: none;
+  }
+
+  #preview {
+    margin-top: 10px;
+  }
+
+  #preview img {
+    max-height: 200px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .btn-send {
+    background: #4a6fa5;
+    color: white;
+    font-weight: bold;
+    border: none;
+    padding: 12px 20px;
+    width: 100%;
+    font-size: 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+
+  .btn-send:hover {
+    background: #3a5a8c;
+  }
+
+  #status {
+    margin-top: 12px;
+    font-weight: bold;
+    min-height: 20px;
+    text-align: center;
+    font-size: 14px;
+  }
+
+  #status:empty {
+    display: none;
+  }
+
+  #status:has(✅) {
+    color: #2e8b57;
+  }
+
+  #status:has(❌) {
+    color: #e53935;
+  }
+</style>
+
+
+<!-- emailjs.init("weuRg4oHu_2yh6FtH"); // ← Бери из EmailJS Dashboard -->
+
+<!-- /pages/page-mailer.html
+<div class="mailer-container">
+    <h2>📧 Отправка отчёта</h2>
+  
+    <label>Кому: <input type="email" id="toEmail" placeholder="client@company.com" /></label>
+    <label>Тема: <input type="text" id="emailSubject" placeholder="Отчёт по ВИК" /></label>
+  
+    <textarea id="emailDescription" rows="5" placeholder="Описание отчёта..."></textarea>
+  
+    <div>
+      <label>Фото: <input type="file" id="photoInput" accept="image/*" /></label>
+      <div id="preview" style="margin: 10px 0;"></div>
+    </div>
+  
+    <select id="templateSelect">
+      <option value="vik">ВИК — Визуальный контроль</option>
+      <option value="kv">Квалитет / Точность</option>
+      <option value="common">Общий отчёт</option>
+    </select>
+  
+    <button onclick="sendEmail()">📤 Отправить письмо</button>
+    <div id="status"></div>
+  </div> -->
