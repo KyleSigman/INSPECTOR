@@ -1,6 +1,6 @@
 
 (function() {
-    emailjs.init(""); 
+    emailjs.init("weuRg4oHu_2yh6FtH"); 
   })();
 
   async function sendEmail() {
@@ -78,4 +78,5 @@
       status.innerHTML = "❌ Ошибка: не отправлено";
     }
   }
+
 
