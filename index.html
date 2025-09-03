@@ -8,7 +8,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
-
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 
 
 </head>
@@ -34,7 +34,8 @@ color: rgba(119, 93, 185, 0.733); font-weight: bold;"
     <br>
     <h3>Меню</h3>
     <ul>
-      <li onclick="showPage('page-add-item')">📗 Добавить изделие</li>
+      <li onclick="showPage('page-mailer')">📧 репорт</li>
+
       <li onclick="showPage('page-inspection')">🔍 Проверки</li>
       <li onclick="showPage('page-ncr')">📝 Акты несоответствия</li>
       <li onclick="showPage('page-checklist')">📎 Комплектность</li>
@@ -48,9 +49,10 @@ color: rgba(119, 93, 185, 0.733); font-weight: bold;"
       <li onclick="showPage('page-statistics')">📊 Статистика</li>
       <li onclick="showPage('page-inspector-profile')">👤 профиль</li>
       <li onclick="showPage('page-analytics')">📈 Аналитика</li> <!-- Добавили -->
+      <li onclick="showPage('page-add-item')">📗 Добавить изделие</li>
       <li onclick="showPage('page-help')">📘 инфа</li> 
-      <li onclick="showPage('page-smart')">⚡ консоль</li>
-      <!-- <li onclick="showPage('page-skill-tree')">🌟 древо умений</li> -->
+<!--       <li onclick="showPage('page-smart')">⚡ консоль</li> -->
+<!--       <li onclick="showPage('page-skill-tree')">🌟 древо умений</li> -->
     </ul>
 
       <!-- Кнопка загрузки кассеты -->
@@ -194,6 +196,7 @@ color: rgba(119, 93, 185, 0.733); font-weight: bold;"
   <script src="script.js"></script>
 </body>
 </html>
+
 
 
 
