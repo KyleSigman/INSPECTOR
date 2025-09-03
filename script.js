@@ -950,7 +950,8 @@ async function loadPageScripts(pageId) {
       'page-tolerance': 'pages/page-tolerance.html',
       'page-statistics': 'pages/page-statistics.html',
       'page-help': 'pages/page-help.html',
-      'page-smart': 'pages/page-smart.html'
+      'page-smart': 'pages/page-smart.html',
+       'page-mailer': 'pages/page-mailer.html'
     };
   
     const url = pageFiles[pageId];
@@ -1980,4 +1981,5 @@ document.addEventListener('DOMContentLoaded', function() {
 //         Аналог: ${mat.analog}
 //       `;
 //     }
+
 //   }
