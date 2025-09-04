@@ -1,3 +1,21 @@
+<!-- <h2>📏 Допуск по ГОСТ 25346</h2>
+<div class="input-group">
+  <input type="number" id="size" placeholder="Размер, мм" step="0.001">
+</div>
+<div class="input-group">
+  <select id="fit" onchange="updateRange()">
+    <option value="h7">h7</option>
+    <option value="H8">H8</option>
+    <option value="k6">k6</option>
+  </select>
+</div>
+<button onclick="calculate()">Показать допуск</button>
+<div id="result"></div>
+<button id="showTableBtn" onclick="showTable()" style="display:none">Показать в таблице</button>
+
+<button onclick="askAIaboutTolerance()">🤖 Спросить ИИ</button>
+<div id="ai-response" style="margin-top: 15px; padding: 10px; background: #f0f8ff; border-radius: 5px; display: none; white-space: pre-wrap;"></div>
+<div id="ai-response" style="margin-top: 15px; padding: 10px; background: #f0f8ff; border-radius: 5px; display: none;"></div> -->
 
 <h2>📏 Допуск по ГОСТ 25346</h2>
 
@@ -61,11 +79,14 @@
         <option value="h16">h16 (вал, 0/-1.400)</option>
       
         <!-- Поля допусков, не относящиеся к размерам отверстий и валов -->
+        <!-- <option value="IT14">± IT14/2 (±0.125)</option>
+<option value="IT15">± IT15/2 (±0.200)</option>
+<option value="IT16">± IT16/2 (±0.300)</option> -->
         <option value="± IT14/2">± IT14/2 (±0.125)</option>
         <option value="± IT15/2">± IT15/2 (±0.200)</option>
         <option value="± IT16/2">± IT16/2 (±0.300)</option>
       </select>
-<!--       <select id="fit" onchange="updateFitInfo()">
+      <!-- <select id="fit" onchange="updateFitInfo()">
         <option value="h7">h7 (вал, 0/-0.025)</option>
         <option value="H8">H8 (отверстие, +0.039/0)</option>
         <option value="k6">k6 (вал, +0.018/+0.012)</option>
@@ -75,7 +96,11 @@
         <option value="H7">H7 (отверстие, +0.025/0)</option>
         <option value="F8">F8 (отверстие, +0.043/+0.025)</option>
       </select> -->
-
+      <!-- <select id="fit" onchange="updateFitInfo()">
+        <option value="h7">h7 (вал, 0/-0.025)</option>
+        <option value="H8">H8 (отверстие, +0.039/0)</option>
+        <option value="k6">k6 (вал, +0.018/+0.002)</option>
+      </select> -->
     </div>
   </div>
 
@@ -89,7 +114,9 @@
   <button style="width: 80%; left: 0;" class="calculate-btn" onclick="calculate()">
       Рассчитать допуск
   </button>
-
+  <button type="button" onclick="startVoiceInput()" style="background: #4CAF50; color: white; padding: 10px; border: none; border-radius: 6px; cursor: pointer; margin-top: 10px;">
+    🎤 Нажми и скажи: "Размер 50, h7"
+  </button>
   <!-- Результаты -->
   <div id="result" class="result-container"></div>
 
@@ -153,5 +180,4 @@
 
 <!-- AI раздел (закомментирован как было) -->
 <!-- <button onclick="askAIaboutTolerance()">🤖 Спросить ИИ</button> -->
-
 <div id="ai-response" style="margin-top: 15px; padding: 10px; background: #f0f8ff; border-radius: 5px; display: none; white-space: pre-wrap;"></div>
