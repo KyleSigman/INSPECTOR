@@ -1,0 +1,33 @@
+<!-- <h1>✨ Люмис</h1> -->
+<div id="status">⏳ Загрузка базы знаний...</div>
+
+<div class="controls">
+  <select id="itemSelect" disabled>
+    <option value="">Выберите изделие...</option>
+  </select>
+
+  <select id="normativeSelect" disabled>
+    <option value="">Тип нормативки</option>
+    <option value="ГОСТ">ГОСТ</option>
+    <option value="API">API</option>
+    <option value="ISO">ISO</option>
+    <option value="ASME">ASME</option>
+  </select>
+
+  <select id="controlTypeSelect" disabled>
+    <option value="">Тип контроля</option>
+    <option value="ВИК">ВИК</option>
+    <option value="УЗК">УЗК</option>
+    <option value="ГИ">ГИ</option>
+    <option value="Приемка">Приемка</option>
+  </select>
+
+  <button onclick="runQuery()" disabled>🔍 Сформировать чек-лист</button>
+</div>
+
+<div id="output">
+  <!-- Сюда вставится чек-лист -->
+</div>
+<div id="gost-sky">
+  <!-- Плитки ГОСТов появятся здесь -->
+</div>
