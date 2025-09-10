@@ -8,8 +8,10 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+<!-- В <head> или перед </body> -->
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
+<link id="page-control-params-css" rel="stylesheet" href="pages/page-control-params.css" disabled>
 
 </head>
 <body>
@@ -34,25 +36,26 @@ color: rgba(119, 93, 185, 0.733); font-weight: bold;"
     <br>
     <h3>Меню</h3>
     <ul>
+      <li onclick="showPage('page-control-params')">⚙️ Параметры контроля</li>
       <li onclick="showPage('page-mailer')">📧 репорт</li>
-
-      <li onclick="showPage('page-inspection')">🔍 Проверки</li>
-      <li onclick="showPage('page-ncr')">📝 Акты несоответствия</li>
-      <li onclick="showPage('page-checklist')">📎 Комплектность</li>
+      <!-- <li onclick="showPage('page-inspection')">🔍 Проверки</li> -->
+      <!-- <li onclick="showPage('page-ncr')">📝 Акты несоответствия</li> -->
+      <!-- <li onclick="showPage('page-checklist')">📎 Комплектность</li> -->
       <li onclick="showPage('page-tolerance')">📏 Допуски</li>
       <li onclick="showPage('page-materials')">🔧 Материалы</li>
       <li onclick="showPage('page-standards')">📚 Стандарты</li>
-      <li onclick="showPage('page-compare')">🔄 Сравнение</li>
+      <!-- <li onclick="showPage('page-compare')">🔄 Сравнение</li> -->
       <li onclick="showPage('page-company')">🏭 Предприятия</li>
       <li onclick="showPage('page-reminders')">🔔 Напоминания</li>
       <!-- <li onclick="showPage('page-translate')">🌐 Перевод</li> -->
-      <li onclick="showPage('page-statistics')">📊 Статистика</li>
+      <!-- <li onclick="showPage('page-statistics')">📊 Статистика</li> -->
       <li onclick="showPage('page-inspector-profile')">👤 профиль</li>
-      <li onclick="showPage('page-analytics')">📈 Аналитика</li> <!-- Добавили -->
-      <li onclick="showPage('page-add-item')">📗 Добавить изделие</li>
+      <li onclick="showPage('page-analytics')">📈 Аналитика</li> 
+      <!-- <li onclick="showPage('page-add-item')">📗 Добавить изделие</li> -->
       <li onclick="showPage('page-help')">📘 инфа</li> 
-<!--       <li onclick="showPage('page-smart')">⚡ консоль</li> -->
-<!--       <li onclick="showPage('page-skill-tree')">🌟 древо умений</li> -->
+      <!-- <li onclick="showPage('page-smart')">⚡ консоль</li> -->
+
+      <!-- <li onclick="showPage('page-skill-tree')">🌟 древо умений</li> -->
     </ul>
 
       <!-- Кнопка загрузки кассеты -->
@@ -110,6 +113,7 @@ color: rgba(119, 93, 185, 0.733); font-weight: bold;"
     rows="6"
   ></textarea>
   <div class="emoji-corner" id="emoji-corner">👨‍💼</div>
+  
 </div>
 
 
@@ -192,13 +196,9 @@ color: rgba(119, 93, 185, 0.733); font-weight: bold;"
     window.db = db;
     console.log('✅ Firebase инициализирован');
   </script>
-
+<script src="Lumis.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
-
-
-
-
 
 
