@@ -262,3 +262,53 @@ function toggleCheckbox(index, total) {
     window.currentSignatureCanvas.updateActivations([...new Set(activeGroups)]);
   }
 }
+
+function handlePhotoUpload(input, itemId) {
+  const previewContainer = document.getElementById(`photo-preview-${itemId}`);
+  previewContainer.innerHTML = ''; // очищаем, если хочешь только 1 фото — или оставь, если разрешаешь несколько
+
+  if (!input.files || input.files.length === 0) return;
+
+  Array.from(input.files).forEach(file => {
+    if (!file.type.startsWith('image/')) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = document.createElement('img');
+      img.src = e.target.result;
+      img.style.width = '100px';
+      img.style.height = '100px';
+      img.style.objectFit = 'cover';
+      img.style.borderRadius = '8px';
+      img.style.boxShadow = '0 2px 6px rgba(0,0,0,0.1)';
+
+      // Добавляем кнопку удаления
+      const wrapper = document.createElement('div');
+      wrapper.style.position = 'relative';
+      wrapper.appendChild(img);
+
+      const removeBtn = document.createElement('button');
+      removeBtn.innerText = '×';
+      removeBtn.style.position = 'absolute';
+      removeBtn.style.top = '2px';
+      removeBtn.style.right = '2px';
+      removeBtn.style.background = '#e74c3c';
+      removeBtn.style.color = 'white';
+      removeBtn.style.border = 'none';
+      removeBtn.style.borderRadius = '50%';
+      removeBtn.style.width = '20px';
+      removeBtn.style.height = '20px';
+      removeBtn.style.fontSize = '12px';
+      removeBtn.style.cursor = 'pointer';
+      removeBtn.onclick = () => {
+        wrapper.remove();
+        // Можно сбросить input, если нужно
+        input.value = '';
+      };
+
+      wrapper.appendChild(removeBtn);
+      previewContainer.appendChild(wrapper);
+    };
+    reader.readAsDataURL(file);
+  });
+}
