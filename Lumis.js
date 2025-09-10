@@ -121,12 +121,22 @@ class Lumis {
     
         html += `
         <div class="param-row" onclick="toggleCheckbox(${idx}, ${instructions.length})" style="border-left-color: ${color};">
-        <input type="checkbox" id="checkbox-${idx}" class="checkbox" onclick="event.stopPropagation();">
+        <input type="checkbox" id="checkbox-${idx}" class="checkbox" onclick="event.stopPropagation(); toggleCheckbox(${idx}, ${instructions.length});">
         <strong>${idx + 1}.<span style="font-size: 0em">[${instr.index}]</span> ${displayValue}</strong>
         ${displayTolerance && displayTolerance !== "—" ? `<span style="color: green; font-size: 17;"> (${displayTolerance})</span>` : ''}
       </div>
         `;
       });
+      // ✅ Добавляем кнопку "Прикрепить фото" после чекбоксов
+html += `
+<div style="margin: 20px 0; text-align: center;">
+  <label for="photo-upload-${item.id}" class="photo-upload-btn">
+  📷 Прикрепить фото
+  </label>
+  <input type="file" id="photo-upload-${item.id}" accept="image/*" capture="environment" style="display: none;" onchange="handlePhotoUpload(this, '${item.id}')">
+  <div id="photo-preview-${item.id}" style="margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;"></div>
+</div>
+`;
     
       html += `<h3>🔊 Инструкции по шагам:</h3>`;
     
@@ -159,7 +169,7 @@ class Lumis {
       uniqueGOSTs.forEach(gost => {
         const gostData = this.gosts[gost] || {};
         const icon = gostData.icon || '❓';
-        html += `<li><strong>${icon} ${gost}</strong> — ${gostData.entity || ''} (${gostData.rank || ''})</li>`;
+        html += `<li><strong>${icon} ${gost}</strong></li>`;
       });
     
       html += `
