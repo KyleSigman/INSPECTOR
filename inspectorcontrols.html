@@ -39,9 +39,10 @@
         header {
             background: var(--color-primary);
             color: white;
-            padding: 20px;
+            padding: 2px;
             text-align: center;
             border-radius: 10px 10px 0 0;
+            height: 60px;
         }
 
         h1, h2, h3 {
@@ -67,9 +68,9 @@
             color: var(--color-dark);
         }
 
-        select, input, button, textarea {
+        select, input, textarea {
             width: 100%;
-            padding: 12px;
+            padding: 7px;
             border: 1px solid #ddd;
             border-radius: 6px;
             font-size: 16px;
@@ -93,6 +94,10 @@
         button:hover {
             background: var(--color-dark);
             transform: translateY(-2px);
+        }
+        #generate-btn 
+        {
+            padding: 12px; border-radius: 5px; margin-top: 5px; font-size: 18px;
         }
 
         #checklist-container {
@@ -127,16 +132,7 @@
             border-radius: 8px;
             overflow: hidden;
         }
-
-        /* .group-header {
-            background: var(--color-light);
-            padding: 15px;
-            font-weight: bold;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-        } */
+        
         .group-header {
     background: var(--color-light);
     padding: 15px;
@@ -157,6 +153,7 @@
     padding: 0 15px;
     display: block; /* По умолчанию развернуто */
     transition: all 0.3s ease;
+
 }
 
 .parameter-group {
@@ -167,15 +164,15 @@
 }
 
         .group-content {
-            padding: 0 15px;
+            padding: 0 5px;
         }
 
         .parameter-card {
-            padding: 15px;
-            border-bottom: 1px solid #eee;
+            padding: 5px; margin-top: 5px;
+            border-bottom: 1px solid #888888;
             display: flex;
             align-items: flex-start;
-            gap: 15px;
+            gap: 0px;
         }
 
         .parameter-card:last-child {
@@ -183,58 +180,72 @@
         }
 
         .parameter-info {
+            background-color: #90b89900;
             flex: 1;
+
         }
 
         .parameter-controls {
             display: flex;
             flex-direction: column;
             align-items: flex-end;
-            gap: 10px;
-            min-width: 200px;
+            gap: 0px;
+            min-width: 100%;
+            background-color: #9fbbce00;
         }
 
         .param-title {
             font-weight: bold;
             margin-bottom: 5px;
+            padding: 5px; padding-left: 10px; border-radius: 4px;
             color: var(--color-dark);
+            background: linear-gradient(to right, #61618e4e,#61618e16,#61618e11) ;
         }
 
         .param-norm, .param-method {
-            font-size: 14px;
+            font-size: 15px;
             color: #666;
             margin-bottom: 5px;
         }
-
+        .param-norm span 
+        {
+            color: rgb(97, 54, 30);
+            background-color: rgba(170, 100, 62, 0.197);
+            padding: 2px 6px;
+        }
         .param-method {
             font-style: italic;
             color: #7f8c8d;
+
+        }
+        .param-method span 
+        {
+            color: rgb(52, 84, 122);
+            background-color: rgba(99, 169, 255, 0.214);
+            padding: 2px 6px;
         }
 
-        /* === Стили для кнопок Принять/Отклонить === */
 .status-checkbox {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
+    position: relative;
     cursor: pointer;
-    width: 80px;
-    height: 30px;
-    padding: 0;
-    margin: 10px;
-    border: 2px solid #cccccc00;
-    border-radius: 8px;
-    background-color: #f5f5f500;
-    transition: all 0.3s ease;
+    width: 100%;
+    height: 50%;
+    right: 0;
+    margin: 0;
+    transition: all 0.1s ease;
     text-align: center;
 }
 
 .status-checkbox input[type="checkbox"] {
-    display: none; /* Скрываем реальный чекбокс */
+right: 0;
+    display: block;
+    width: 20px;
+    min-width: 20px;
+
 }
 
 .status-checkbox .status-label {
-    font-size: 12px;
+    font-size: 15px;
     font-weight: bold;
     color: #666;
     margin-top: 4px;
@@ -245,93 +256,33 @@
     transition: all 0.3s ease;
 }
 
-/* Активная кнопка "Принять" */
-.status-checkbox.accept-btn input[type="checkbox"]:checked + .status-label {
-    background-color: #27ae60 !important;
-    color: white !important;
-    border-color: #27ae60 !important;
-}
 
-/* Активная кнопка "Отклонить" */
-.status-checkbox.reject-btn input[type="checkbox"]:checked + .status-label {
-    background-color: #c0392b !important;
-    color: white !important;
-    border-color: #c0392b !important;
-}
 
-/* Неактивные кнопки при выборе другой */
-.status-checkbox.accept-btn:not(:has(input:checked)) {
-    background-color: #e0e0e000 !important;
-    border-color: #cccccc00 !important;
-}
-
-.status-checkbox.reject-btn:not(:has(input:checked)) {
-    background-color: #e0e0e000 !important;
-    border-color: #cccccc00 !important;
-}
-
-/* Для совместимости со старыми браузерами (если не работает :has) — добавляем JS ниже */
-        /* .status-checkbox {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            cursor: pointer;
-        }
-
-        .status-label {
-            font-size: 14px;
-            color: var(--color-gray);
-            border: 1px solid var(--color-gray);
-            padding: 4px 8px;
-            border-radius: 4px;
-            transition: all 0.3s ease;
-        }
-
-        .status-checkbox input[type="checkbox"]:checked + .status-label {
-            color: var(--color-success);
-            border-color: var(--color-success);
-            font-weight: bold;
-        } */
-
-        /* .photo-btn {
-            background: var(--color-info);
-            color: white;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: background 0.3s ease;
-        }
-
-        .photo-btn:hover {
-            background: #2980b9;
-        } */
         .photo-btn {
-    background: var(--color-info);
-    color: white;
-    border: none;
-    border-radius: 8px;
+            position: relative;
+    color: rgb(127, 127, 127);
+    padding: 10px;
+    border-radius: 5px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 500;
     transition: all 0.3s ease;
-    
-    /* 🔥 НОВЫЕ ПАРАМЕТРЫ */
-    width: 200px;           /* ← Ширина 200px */
-    height: 44px;           /* ← Фиксированная высота — пропорционально */
-    padding: 0;             /* ← Убираем внутренние отступы — теперь размеры задаются явно */
+        width: 100%;   
+        left: 0%;        /* ← Ширина 200px */
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-top: 8px;        /* ← Добавим небольшой отступ сверху для визуального разделения */
+    margin-top: 8px;     
+    background-color: transparent;
+    border: 2px solid rgba(0, 0, 0, 0.197);
 }
 
 /* 💡 Подсветка при наведении */
 .photo-btn:hover {
-    background: #2980b9;
+    background: #297fb92a;
     transform: translateY(-1px);
     box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
+    color: white;
 }
 
         .photo-preview {
@@ -359,7 +310,7 @@
 
         .btn-complete {
             background: var(--color-success);
-            max-width: 200px;
+            max-width: 200px; padding: 10px; border-radius: 5px; font-size: 16px;
         }
 
         .completed-checklists {
@@ -391,6 +342,7 @@
         }
 
         @media (max-width: 768px) {
+
             .parameter-card {
                 flex-direction: column;
             }
@@ -399,6 +351,17 @@
                 width: 100%;
                 align-items: flex-start;
             }
+            .compact-controls {
+    display: flex;
+    gap: 0px;
+    width: 100%;
+    height: 60px;
+    align-items: center;
+    margin-bottom: 0px;
+
+    justify-content: space-between;
+
+        }
             
             .meta-data {
                 flex-direction: column;
@@ -408,89 +371,69 @@
                 width: 100%;
             }
 
-            .compact-controls {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    margin-bottom: 10px;
-
-}
-
 .value-inputs {
+    width: 66%;
     display: flex;
-    flex-direction: row; /* ← Горизонтально */
-    gap: 8px;           /* ← Отступ между полями */
-    align-items: center; /* ← Выравнивание по вертикали */
+    flex-direction: row; 
+    gap: 8px;          
+    align-items: center;
+
 }
 
 .value-inputs input {
-    width: 70px;        /* ← Удобная ширина для чисел */
+    width: 50%; 
     padding: 6px;
-    border: 1px solid #ddd;
+    outline: 2px solid rgba(0, 0, 0, 0.186);
     border-radius: 4px;
     font-size: 12px;
     text-align: center;
-    height: 30px;       /* ← Фиксированная высота для выравнивания */
+    height: 30px;      
 }
 /* Цвета для чекбоксов — при активации */
 .status-checkbox input[type="checkbox"]:checked + .status-label {
     font-weight: bold;
+
 }
 
-.status-checkbox input[type="checkbox"][data-status="accept"]:checked + .status-label {
-    background-color: #d4edda !important;
-    color: #155724 !important;
-    border-color: #27ae60 !important;
-}
 
-.status-checkbox input[type="checkbox"][data-status="reject"]:checked + .status-label {
-    background-color: #f8d7da !important;
-    color: #721c24 !important;
-    border-color: #c0392b !important;
-}
-/* .status-checkboxes {
-    display: flex;
-    flex-direction: column;
+.status-checkboxes {
+    position: relative; 
+    height: 100%;
+    width: 32%;
     gap: 5px;
 }
 
 .status-checkbox {
+
     display: flex;
-    align-items: center;
+    justify-content: flex-start;
     gap: 5px;
     cursor: pointer;
     font-size: 12px;
 }
 
 .status-checkbox input[type="checkbox"] {
-    width: 16px;
-    height: 16px;
+
     margin: 0;
-} */
+}
+.status-checkbox span 
+{
+    position: relative;
+    right: 0;
+    display:  block;
+    margin: 0;padding: 0; height: auto;
+}
 
 .status-label {
-    font-size: 12px;
-    padding: 3px 6px;
-    border-radius: 3px;
-    border: 1px solid var(--color-gray);
-    min-width: 60px;
+    position: relative;
+    font-size: 20px;
+    padding: 0px;
+    width: 80%; height: 100%;
     text-align: center;
 }
 
-.status-checkbox input[type="checkbox"]:checked + .status-label[data-status="accept"] {
-    background: var(--color-success);
-    color: white;
-    border-color: var(--color-success);
-}
-
-.status-checkbox input[type="checkbox"]:checked + .status-label[data-status="reject"] {
-    background: var(--color-danger);
-    color: white;
-    border-color: var(--color-danger);
-}
-
-
         }
+
     </style>
 </head>
 <body>
@@ -499,7 +442,7 @@
             <h1>Чек-лист</h1>
             <!-- <p>Нефтегазовое оборудование | Турбокомпрессоры</p> -->
         </header>
-        <li><a href="index.html" style="color: inherit; text-decoration: none; display: block; height: 100%;">↩️ в меню</a></li>
+        <p style="padding: 5px;"><a href="index.html" style="color: inherit; text-decoration: none; display: block; height: 100%;">↩️ в меню</a></p>
 
         <div class="card" id="selection-container">
             <h2>Выбор изделия и нормативки</h2>
@@ -704,8 +647,8 @@ function renderParameters(standardData, controlType) {
                     <div class="parameter-card">
                         <div class="parameter-info">
                             <div class="param-title">${param.name}</div>
-                            <div class="param-norm">Норматив: ${param.norm}</div>
-                            <div class="param-method">Метод контроля: ${param.method}</div>
+                            <div class="param-norm"><span>норматив</span>: ${param.norm}</div>
+                            <div class="param-method"><span>Метод контроля</span>: ${param.method}</div>
                         </div>
 
                         <div class="parameter-controls">
@@ -716,12 +659,14 @@ function renderParameters(standardData, controlType) {
                                 </div>
                                 <div class="status-checkboxes">
                                     <label class="status-checkbox accept-btn">
+                                        <span class="status-label">✅</span>
                                         <input type="checkbox" class="param-status" name="status-${param.id}" data-status="accept" data-param="${param.id}">
-                                        <span class="status-label">Принять</span>
+
                                     </label>
                                     <label class="status-checkbox reject-btn">
+                                        <span class="status-label">❌</span>
                                         <input type="checkbox" class="param-status" name="status-${param.id}" data-status="reject" data-param="${param.id}">
-                                        <span class="status-label">Отклонить</span>
+
                                     </label>
                                 </div>
                             </div>
@@ -826,8 +771,8 @@ function completeChecklist(checklistId) {
         const deviationValue = card.querySelector('.deviation-value')?.value.trim() || '';
 
         let status = 'Не определён';
-        if (card.querySelector('input[data-status="accept"]:checked')) status = 'Принят';
-        if (card.querySelector('input[data-status="reject"]:checked')) status = 'Отклонён';
+        if (card.querySelector('input[data-status="accept"]:checked')) status = '✔️';
+        if (card.querySelector('input[data-status="reject"]:checked')) status = '✖️';
 
         // Получаем фото, если есть
         const photoBtn = card.querySelector('button.photo-btn');
@@ -898,8 +843,8 @@ document.getElementById('generate-report-btn').addEventListener('click', functio
 
             // Цветной статус
             let statusText = param.status;
-            if (param.status === 'Принят') statusText = `<span style="background: #d4edda; color: #155724; padding: 2px 6px; border-radius: 4px; font-size: 13px;">${param.status}</span>`;
-            else if (param.status === 'Отклонён') statusText = `<span style="background: #f8d7da; color: #721c24; padding: 2px 6px; border-radius: 4px; font-size: 13px;">${param.status}</span>`;
+            if (param.status === '✔️') statusText = `<span style="background: #d4edda; color: #155724; padding: 2px 6px; border-radius: 4px; font-size: 13px;">${param.status}</span>`;
+            else if (param.status === '✖️') statusText = `<span style="background: #f8d7da; color: #721c24; padding: 2px 6px; border-radius: 4px; font-size: 13px;">${param.status}</span>`;
             else statusText = `<span style="background: #e9ecef; color: #495057; padding: 2px 6px; border-radius: 4px; font-size: 13px;">${param.status}</span>`;
 
             line += statusText;
@@ -956,7 +901,7 @@ document.getElementById('generate-report-btn').addEventListener('click', functio
 
         // Обновляем текст кнопок
         const label = checkbox.parentElement.querySelector('.status-label');
-        label.textContent = isAccept ? 'Принят' : 'Отклонён';
+        label.textContent = isAccept ? '✔️' : '✖️';
     } else {
         // Если сняли — возвращаем исходный текст
         const label = checkbox.parentElement.querySelector('.status-label');
@@ -968,26 +913,6 @@ document.getElementById('generate-report-btn').addEventListener('click', functio
     const acceptBtn = group.querySelector('.accept-btn');
     const rejectBtn = group.querySelector('.reject-btn');
 
-    // Если принят — отклонить серый, и наоборот
-    if (acceptBtn.querySelector('input:checked')) {
-        rejectBtn.style.backgroundColor = '#e0e0e0';
-        rejectBtn.style.borderColor = '#ccc';
-        rejectBtn.querySelector('.status-label').style.color = '#666';
-    } else {
-        rejectBtn.style.backgroundColor = '#f5f5f5';
-        rejectBtn.style.borderColor = '#ccc';
-        rejectBtn.querySelector('.status-label').style.color = '#666';
-    }
-
-    if (rejectBtn.querySelector('input:checked')) {
-        acceptBtn.style.backgroundColor = '#e0e0e0';
-        acceptBtn.style.borderColor = '#ccc';
-        acceptBtn.querySelector('.status-label').style.color = '#666';
-    } else {
-        acceptBtn.style.backgroundColor = '#f5f5f5';
-        acceptBtn.style.borderColor = '#ccc';
-        acceptBtn.querySelector('.status-label').style.color = '#666';
-    }
 });
 
   // Загружаем данные при старте
