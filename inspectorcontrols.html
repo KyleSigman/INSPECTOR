@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Чек-лист</title>
+    <style>
+        :root {
+            --color-primary: #2c3e50;
+            --color-success: #27ae60;
+            --color-danger: #c0392b;
+            --color-warning: #f39c12;
+            --color-info: #3498db;
+            --color-light: #ecf0f1;
+            --color-dark: #34495e;
+            --color-gray: #95a5a6;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            color: var(--color-dark);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: var(--color-primary);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 10px 10px 0 0;
+        }
+
+        h1, h2, h3 {
+            margin-bottom: 0.5em;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 0 0 10px 10px;
+            box-shadow: var(--shadow);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: var(--color-dark);
+        }
+
+        select, input, button, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+
+        select:focus, input:focus, textarea:focus {
+            outline: none;
+            border-color: var(--color-info);
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+
+        button {
+            background: var(--color-primary);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background: var(--color-dark);
+            transform: translateY(-2px);
+        }
+
+        #checklist-container {
+            display: none;
+        }
+
+        .checklist-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--color-light);
+        }
+
+        .meta-data {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .meta-data input {
+            width: auto;
+            min-width: 150px;
+        }
+
+        .parameter-group {
+            margin-bottom: 25px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        /* .group-header {
+            background: var(--color-light);
+            padding: 15px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        } */
+        .group-header {
+    background: var(--color-light);
+    padding: 15px;
+    font-weight: bold;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.3s ease;
+}
+
+.group-header:hover {
+    background: #dde4e6;
+}
+
+.group-content {
+    padding: 0 15px;
+    display: block; /* По умолчанию развернуто */
+    transition: all 0.3s ease;
+}
+
+.parameter-group {
+    margin-bottom: 25px;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+        .group-content {
+            padding: 0 15px;
+        }
+
+        .parameter-card {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+        }
+
+        .parameter-card:last-child {
+            border-bottom: none;
+        }
+
+        .parameter-info {
+            flex: 1;
+        }
+
+        .parameter-controls {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 10px;
+            min-width: 200px;
+        }
+
+        .param-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: var(--color-dark);
+        }
+
+        .param-norm, .param-method {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .param-method {
+            font-style: italic;
+            color: #7f8c8d;
+        }
+
+        /* === Стили для кнопок Принять/Отклонить === */
+.status-checkbox {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    width: 80px;
+    height: 30px;
+    padding: 0;
+    margin: 10px;
+    border: 2px solid #cccccc00;
+    border-radius: 8px;
+    background-color: #f5f5f500;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.status-checkbox input[type="checkbox"] {
+    display: none; /* Скрываем реальный чекбокс */
+}
+
+.status-checkbox .status-label {
+    font-size: 12px;
+    font-weight: bold;
+    color: #666;
+    margin-top: 4px;
+    line-height: 1.2;
+    padding: 0;
+    text-align: center;
+    width: 100%;
+    transition: all 0.3s ease;
+}
+
+/* Активная кнопка "Принять" */
+.status-checkbox.accept-btn input[type="checkbox"]:checked + .status-label {
+    background-color: #27ae60 !important;
+    color: white !important;
+    border-color: #27ae60 !important;
+}
+
+/* Активная кнопка "Отклонить" */
+.status-checkbox.reject-btn input[type="checkbox"]:checked + .status-label {
+    background-color: #c0392b !important;
+    color: white !important;
+    border-color: #c0392b !important;
+}
+
+/* Неактивные кнопки при выборе другой */
+.status-checkbox.accept-btn:not(:has(input:checked)) {
+    background-color: #e0e0e000 !important;
+    border-color: #cccccc00 !important;
+}
+
+.status-checkbox.reject-btn:not(:has(input:checked)) {
+    background-color: #e0e0e000 !important;
+    border-color: #cccccc00 !important;
+}
+
+/* Для совместимости со старыми браузерами (если не работает :has) — добавляем JS ниже */
+        /* .status-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .status-label {
+            font-size: 14px;
+            color: var(--color-gray);
+            border: 1px solid var(--color-gray);
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .status-checkbox input[type="checkbox"]:checked + .status-label {
+            color: var(--color-success);
+            border-color: var(--color-success);
+            font-weight: bold;
+        } */
+
+        /* .photo-btn {
+            background: var(--color-info);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s ease;
+        }
+
+        .photo-btn:hover {
+            background: #2980b9;
+        } */
+        .photo-btn {
+    background: var(--color-info);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    
+    /* 🔥 НОВЫЕ ПАРАМЕТРЫ */
+    width: 200px;           /* ← Ширина 200px */
+    height: 44px;           /* ← Фиксированная высота — пропорционально */
+    padding: 0;             /* ← Убираем внутренние отступы — теперь размеры задаются явно */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 8px;        /* ← Добавим небольшой отступ сверху для визуального разделения */
+}
+
+/* 💡 Подсветка при наведении */
+.photo-btn:hover {
+    background: #2980b9;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
+}
+
+        .photo-preview {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .photo-preview img {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+
+        .actions-footer {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid var(--color-light);
+        }
+
+        .btn-complete {
+            background: var(--color-success);
+            max-width: 200px;
+        }
+
+        .completed-checklists {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .completed-item {
+            background: white;
+            padding: 10px 15px;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .completed-item:hover {
+            transform: translateY(-2px);
+        }
+
+        .completed-icon {
+            color: var(--color-success);
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .parameter-card {
+                flex-direction: column;
+            }
+            
+            .parameter-controls {
+                width: 100%;
+                align-items: flex-start;
+            }
+            
+            .meta-data {
+                flex-direction: column;
+            }
+            
+            .meta-data input {
+                width: 100%;
+            }
+
+            .compact-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 10px;
+
+}
+
+.value-inputs {
+    display: flex;
+    flex-direction: row; /* ← Горизонтально */
+    gap: 8px;           /* ← Отступ между полями */
+    align-items: center; /* ← Выравнивание по вертикали */
+}
+
+.value-inputs input {
+    width: 70px;        /* ← Удобная ширина для чисел */
+    padding: 6px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 12px;
+    text-align: center;
+    height: 30px;       /* ← Фиксированная высота для выравнивания */
+}
+/* Цвета для чекбоксов — при активации */
+.status-checkbox input[type="checkbox"]:checked + .status-label {
+    font-weight: bold;
+}
+
+.status-checkbox input[type="checkbox"][data-status="accept"]:checked + .status-label {
+    background-color: #d4edda !important;
+    color: #155724 !important;
+    border-color: #27ae60 !important;
+}
+
+.status-checkbox input[type="checkbox"][data-status="reject"]:checked + .status-label {
+    background-color: #f8d7da !important;
+    color: #721c24 !important;
+    border-color: #c0392b !important;
+}
+/* .status-checkboxes {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.status-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.status-checkbox input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+} */
+
+.status-label {
+    font-size: 12px;
+    padding: 3px 6px;
+    border-radius: 3px;
+    border: 1px solid var(--color-gray);
+    min-width: 60px;
+    text-align: center;
+}
+
+.status-checkbox input[type="checkbox"]:checked + .status-label[data-status="accept"] {
+    background: var(--color-success);
+    color: white;
+    border-color: var(--color-success);
+}
+
+.status-checkbox input[type="checkbox"]:checked + .status-label[data-status="reject"] {
+    background: var(--color-danger);
+    color: white;
+    border-color: var(--color-danger);
+}
+
+
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Чек-лист</h1>
+            <!-- <p>Нефтегазовое оборудование | Турбокомпрессоры</p> -->
+        </header>
+        <li><a href="index.html" style="color: inherit; text-decoration: none; display: block; height: 100%;">↩️ в меню</a></li>
+
+        <div class="card" id="selection-container">
+            <h2>Выбор изделия и нормативки</h2>
+            <div class="form-group">
+                <label for="product-type">Тип изделия</label>
+                <select id="product-type">
+                    <option value="">-- Выберите изделие --</option>
+                    <option value="pipe">Труба</option>
+                    <option value="flange">Фланец</option>
+                    <option value="thrust_bearing">Подшипник упорный</option>
+                    <option value="sealing_ring">Кольцо уплотнительное</option>
+                    <!-- <option value="clamp_block">Колодка</option> -->
+                    <!-- <option value="bearing">Подшипники качения</option> -->
+                    <!-- <option value="nozzle">Форсунка</option> -->
+                    <!-- <option value="labyrinth_seal">Уплотнение лабиринтное</option> -->
+                 
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="standard-type">Нормативный документ</label>
+                <select id="standard-type">
+                    <option value="">-- Выберите нормативку --</option>
+                    <!-- Options will be populated dynamically -->
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="control-type">Вид контроля</label>
+                <select id="control-type">
+                    <option value="">-- Выберите вид контроля --</option>
+                    <option value="ВИК">ВИК</option>
+                    <option value="Входной контроль">Входной контроль</option>
+                    <option value="Приемка">Приемка</option>
+                    <option value="Гидроиспытания">Гидроиспытания</option>
+                    <option value="Ультразвук">Ультразвуковой контроль</option>
+                    
+                </select>
+            </div>
+            <button id="generate-btn">Создать чек-лист</button>
+        </div>
+
+        <div id="checklist-container">
+            <!-- Checklist content will be generated here -->
+        </div>
+
+        <div id="completed-checklists" class="completed-checklists">
+            <!-- Completed checklists will appear here -->
+        </div>
+
+        <div style="text-align: center; margin: 40px 0 60px 0;">
+            <button id="generate-report-btn" style="
+                background: #00b618;
+                color: white;
+                border: none;
+                padding: 14px 30px;
+                border-radius: 8px;
+                font-size: 18px;
+                font-weight: bold;
+                cursor: pointer;
+                box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            ">
+                ОТЧЕТ
+            </button>
+        </div>
+        <div id="report-output" style="
+    margin-top: 30px;
+    max-width: 1000px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 20px;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    font-family: 'Segoe UI', sans-serif;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+"></div>
+    </div>
+
+    <script>
+        // Элементы DOM
+        const productTypeSelect = document.getElementById('product-type');
+        const standardTypeSelect = document.getElementById('standard-type');
+        const controlTypeSelect = document.getElementById('control-type');
+        const generateBtn = document.getElementById('generate-btn');
+        const selectionContainer = document.getElementById('selection-container');
+        const checklistContainer = document.getElementById('checklist-container');
+        const completedChecklistsContainer = document.getElementById('completed-checklists');
+
+        // Массив для хранения завершенных чек-листов
+        let completedChecklists = [];
+
+        // Обновление списка стандартов при выборе изделия
+        productTypeSelect.addEventListener('change', updateStandardOptions);
+
+        function updateStandardOptions() {
+            const productType = productTypeSelect.value;
+            standardTypeSelect.innerHTML = '<option value="">-- Выберите нормативку --</option>';
+            
+            if (productType && parametersDatabase[productType]) {
+                const standards = parametersDatabase[productType].standards;
+                for (const [key, standard] of Object.entries(standards)) {
+                    const option = document.createElement('option');
+                    option.value = key;
+                    option.textContent = `${standard.name} - ${standard.description}`;
+                    standardTypeSelect.appendChild(option);
+                }
+            }
+        }
+
+        // Генерация чек-листа
+        generateBtn.addEventListener('click', () => {
+            const productType = productTypeSelect.value;
+            const standardKey = standardTypeSelect.value;
+            const controlType = controlTypeSelect.value;
+
+            if (!productType || !standardKey || !controlType) {
+                alert('Пожалуйста, заполните все поля для формирования чек-листа.');
+                return;
+            }
+
+            try {
+                const standard = parametersDatabase[productType].standards[standardKey];
+                renderChecklist(standard, productType, controlType);
+                
+                // Показываем чек-лист
+                selectionContainer.style.display = 'none';
+                checklistContainer.style.display = 'block';
+                
+            } catch (error) {
+                alert('Ошибка формирования чек-листа. Выберите другую комбинацию.');
+                console.error(error);
+            }
+        });
+
+        // Отрисовка чек-листа
+
+        function renderChecklist(standardData, productType, controlType) {
+    const checklistId = 'checklist-' + Date.now();
+    
+    const checklistHTML = `
+        <div class="card" id="${checklistId}">
+            <div class="checklist-header">
+                <h2>${productTypeSelect.options[productTypeSelect.selectedIndex].text}, 
+                    ${standardData.name}, 
+                    ${controlTypeSelect.options[controlTypeSelect.selectedIndex].text}
+                </h2>
+            </div>
+
+            <div id="parameters-container-${checklistId}">
+                ${renderParameters(standardData, controlType)}
+            </div>
+            <div class="checklist-header">
+                <div class="meta-data">
+                    <input type="text" placeholder="№ чертежа" class="drawing-number"> <!-- НОВОЕ ПОЛЕ -->
+                    <input type="text" placeholder="№ партии/заказа" class="batch-number">
+                    <input type="date" class="inspection-date">
+                    <input type="text" placeholder="ФИО Инспектора" class="inspector-name">
+                </div>
+            </div>
+            <div class="actions-footer">
+                <button class="btn-complete" onclick="completeChecklist('${checklistId}')">Завершить проверку</button>
+            </div>
+        </div>
+    `;
+    
+    checklistContainer.innerHTML = checklistHTML;
+    
+    // Установка текущей даты
+    const dateInput = checklistContainer.querySelector('.inspection-date');
+    if (dateInput) {
+        dateInput.valueAsDate = new Date();
+    }
+
+    // Добавляем обработчики для сворачивания/разворачивания групп
+    setTimeout(() => {
+        const groupHeaders = document.querySelectorAll(`#${checklistId} .group-header`);
+        groupHeaders.forEach(header => {
+            header.addEventListener('click', function() {
+                const content = this.nextElementSibling;
+                if (content.style.display === 'none') {
+                    content.style.display = 'block';
+                } else {
+                    content.style.display = 'none';
+                }
+            });
+        });
+    }, 100);
+}
+
+function renderParameters(standardData, controlType) {
+    let html = '';
+    
+    standardData.parameters.forEach(group => {
+        let groupParametersHTML = '';
+        let hasVisibleParameters = false;
+        
+        group.parameters.forEach(param => {
+            if (param.inspectionTypes && param.inspectionTypes.includes(controlType)) {
+                hasVisibleParameters = true;
+                groupParametersHTML += `
+                    <div class="parameter-card">
+                        <div class="parameter-info">
+                            <div class="param-title">${param.name}</div>
+                            <div class="param-norm">Норматив: ${param.norm}</div>
+                            <div class="param-method">Метод контроля: ${param.method}</div>
+                        </div>
+
+                        <div class="parameter-controls">
+                            <div class="compact-controls">
+                                <div class="value-inputs">
+                                    <input type="text" placeholder="Факт" class="actual-value" maxlength="10">
+                                    <input type="text" placeholder="Откл." class="deviation-value" maxlength="10">
+                                </div>
+                                <div class="status-checkboxes">
+                                    <label class="status-checkbox accept-btn">
+                                        <input type="checkbox" class="param-status" name="status-${param.id}" data-status="accept" data-param="${param.id}">
+                                        <span class="status-label">Принять</span>
+                                    </label>
+                                    <label class="status-checkbox reject-btn">
+                                        <input type="checkbox" class="param-status" name="status-${param.id}" data-status="reject" data-param="${param.id}">
+                                        <span class="status-label">Отклонить</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <button class="photo-btn" onclick="addPhoto('${param.id}')">Фото</button>
+                            <div class="photo-preview" id="photo-preview-${param.id}"></div>
+                        </div>
+                    </div>
+                `;
+            }
+        });
+        
+        if (hasVisibleParameters) {
+            html += `
+                <div class="parameter-group">
+                    <div class="group-header">
+                        ${group.group}
+                        <span>↕</span>
+                    </div>
+                    <div class="group-content">
+                        ${groupParametersHTML}
+                    </div>
+                </div>
+            `;
+        }
+    });
+    
+    return html;
+}
+
+
+
+        function addPhoto(paramId) {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.style.display = 'none';
+
+    input.onchange = function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Проверяем, что это изображение
+        if (!file.type.startsWith('image/')) {
+            alert('Пожалуйста, выберите изображение.');
+            return;
+        }
+
+        // Создаём URL для предпросмотра
+        const imageUrl = URL.createObjectURL(file);
+
+        // Находим контейнер превью и кнопку
+        const previewContainer = document.getElementById(`photo-preview-${paramId}`);
+        const photoBtn = document.querySelector(`button[onclick="addPhoto('${paramId}')"]`);
+
+        // Очищаем старые фото
+        previewContainer.innerHTML = '';
+
+        // Добавляем миниатюру
+        const img = document.createElement('img');
+        img.src = imageUrl;
+        img.style.width = '60px';
+        img.style.height = '60px';
+        img.style.objectFit = 'cover';
+        img.style.borderRadius = '4px';
+        img.style.border = '1px solid #ddd';
+        previewContainer.appendChild(img);
+
+        // Меняем цвет кнопки на зелёный
+        photoBtn.style.backgroundColor = '#27ae60';
+        photoBtn.style.color = 'white';
+        photoBtn.textContent = 'Фото добавлено';
+
+        // Сохраняем ссылку в data-атрибут кнопки для отчёта
+        photoBtn.dataset.photoUrl = imageUrl;
+
+        // Также сохраним имя файла (опционально)
+        photoBtn.dataset.photoName = file.name;
+    };
+
+    document.body.appendChild(input);
+    input.click();
+}
+
+
+
+function completeChecklist(checklistId) {
+    const checklistElement = document.getElementById(checklistId);
+    if (!checklistElement) return;
+
+    // Собираем метаданные
+    const titleText = checklistElement.querySelector('h2').textContent.trim();
+    const [product, , controlType] = titleText.split(',').map(s => s.trim());
+    const drawingNumber = checklistElement.querySelector('.drawing-number')?.value.trim() || '';
+    const batchNumber = checklistElement.querySelector('.batch-number')?.value.trim() || '';
+    const inspectorName = checklistElement.querySelector('.inspector-name')?.value.trim() || '';
+
+    // Собираем ВСЕ параметры — с фото!
+    const parameters = [];
+    checklistElement.querySelectorAll('.parameter-card').forEach(card => {
+        const paramTitle = card.querySelector('.param-title')?.textContent.trim() || '';
+        const actualValue = card.querySelector('.actual-value')?.value.trim() || '';
+        const deviationValue = card.querySelector('.deviation-value')?.value.trim() || '';
+
+        let status = 'Не определён';
+        if (card.querySelector('input[data-status="accept"]:checked')) status = 'Принят';
+        if (card.querySelector('input[data-status="reject"]:checked')) status = 'Отклонён';
+
+        // Получаем фото, если есть
+        const photoBtn = card.querySelector('button.photo-btn');
+        const photoUrl = photoBtn.dataset.photoUrl || null;
+        const photoName = photoBtn.dataset.photoName || null;
+
+        parameters.push({
+            title: paramTitle,
+            actual: actualValue,
+            deviation: deviationValue,
+            status: status,
+            photoUrl: photoUrl,   // ⬅️ СОХРАНЯЕМ ССЫЛКУ НА ФОТО
+            photoName: photoName // ⬅️ СОХРАНЯЕМ ИМЯ ФАЙЛА (для информации)
+        });
+    });
+
+    // Сохраняем полный объект
+    completedChecklists.push({
+        id: checklistId,
+        product,
+        controlType,
+        drawingNumber,
+        batchNumber,
+        inspectorName,
+        completedAt: new Date().toLocaleString(),
+        parameters: parameters
+    });
+
+    // Создаём мини-элемент
+    const completedItem = document.createElement('div');
+    completedItem.className = 'completed-item';
+    completedItem.innerHTML = `
+        <span class="completed-icon">✓</span>
+        <span>${product} — ${controlType}</span>
+    `;
+    completedItem.onclick = () => showChecklistDetails(checklistId);
+
+    completedChecklistsContainer.appendChild(completedItem);
+
+    // Очищаем форму
+    resetForm();
+}
+
+document.getElementById('generate-report-btn').addEventListener('click', function() {
+    if (completedChecklists.length === 0) {
+        document.getElementById('report-output').innerHTML = '<p style="color: #666; text-align: center;">Нет завершённых чек-листов.</p>';
+        return;
+    }
+
+    let report = '';
+
+    completedChecklists.forEach(checklist => {
+        // Заголовок
+        report += `📋 ${checklist.product} — ${checklist.controlType}\n`;
+        report += `   № чертежа: ${checklist.drawingNumber || '—'} | № партии: ${checklist.batchNumber || '—'}\n`;
+        report += `   Инспектор: ${checklist.inspectorName || '—'} | ${checklist.completedAt}\n\n`;
+
+        // Параметры
+        checklist.parameters.forEach(param => {
+            let line = `• ${param.title}`;
+
+            if (param.actual) line += ` — ${param.actual.replace('.', ',')} мм`;
+            else line += ` — не указано`;
+
+            if (param.deviation) line += ` (откл.: ${param.deviation.replace('.', ',')} мм)`;
+
+            line += ` — `;
+
+            // Цветной статус
+            let statusText = param.status;
+            if (param.status === 'Принят') statusText = `<span style="background: #d4edda; color: #155724; padding: 2px 6px; border-radius: 4px; font-size: 13px;">${param.status}</span>`;
+            else if (param.status === 'Отклонён') statusText = `<span style="background: #f8d7da; color: #721c24; padding: 2px 6px; border-radius: 4px; font-size: 13px;">${param.status}</span>`;
+            else statusText = `<span style="background: #e9ecef; color: #495057; padding: 2px 6px; border-radius: 4px; font-size: 13px;">${param.status}</span>`;
+
+            line += statusText;
+
+            // Добавляем миниатюру фото, если есть
+            if (param.photoUrl) {
+                line += ` <img src="${param.photoUrl}" style="width: 40px; height: 40px; object-fit: cover; border: 1px solid #ccc; border-radius: 4px; vertical-align: middle; margin-left: 8px;" />`;
+            }
+
+            report += line + '\n';
+        });
+
+        report += '\n_________\n\n';
+    });
+
+    report = report.replace(/\n_________\n\n$/, '');
+
+    document.getElementById('report-output').innerHTML = report.replace(/\n/g, '<br>');
+});
+
+
+       
+        function showChecklistDetails(checklistData) {
+            alert(`Детали чек-листа:\n${checklistData.title}\nПартия: ${checklistData.batchNumber}\nИнспектор: ${checklistData.inspectorName}\nДата: ${checklistData.completedAt}`);
+        }
+
+        // Сброс формы и показ формы выбора
+        function resetForm() {
+            checklistContainer.innerHTML = '';
+            checklistContainer.style.display = 'none';
+            selectionContainer.style.display = 'block';
+            
+            // Сброс значений формы
+            productTypeSelect.value = '';
+            standardTypeSelect.innerHTML = '<option value="">-- Выберите нормативку --</option>';
+            controlTypeSelect.value = '';
+        }
+
+        // Обработчики для чекбоксов (будут работать после рендера)
+        // Обработчики для чекбоксов (будут работать после рендера)
+        document.addEventListener('change', function(e) {
+    const checkbox = e.target;
+    if (!checkbox.classList.contains('param-status')) return;
+
+    const paramName = checkbox.name;
+    const isAccept = checkbox.dataset.status === 'accept';
+    const isReject = checkbox.dataset.status === 'reject';
+
+    // Снимаем галочку у другого чекбокса в этой группе
+    if (checkbox.checked) {
+        document.querySelectorAll(`input[name="${paramName}"]`).forEach(cb => {
+            if (cb !== checkbox) cb.checked = false;
+        });
+
+        // Обновляем текст кнопок
+        const label = checkbox.parentElement.querySelector('.status-label');
+        label.textContent = isAccept ? 'Принят' : 'Отклонён';
+    } else {
+        // Если сняли — возвращаем исходный текст
+        const label = checkbox.parentElement.querySelector('.status-label');
+        label.textContent = isAccept ? 'Принять' : 'Отклонить';
+    }
+
+    // Обновляем стили всех кнопок в этой группе
+    const group = checkbox.closest('.parameter-card');
+    const acceptBtn = group.querySelector('.accept-btn');
+    const rejectBtn = group.querySelector('.reject-btn');
+
+    // Если принят — отклонить серый, и наоборот
+    if (acceptBtn.querySelector('input:checked')) {
+        rejectBtn.style.backgroundColor = '#e0e0e0';
+        rejectBtn.style.borderColor = '#ccc';
+        rejectBtn.querySelector('.status-label').style.color = '#666';
+    } else {
+        rejectBtn.style.backgroundColor = '#f5f5f5';
+        rejectBtn.style.borderColor = '#ccc';
+        rejectBtn.querySelector('.status-label').style.color = '#666';
+    }
+
+    if (rejectBtn.querySelector('input:checked')) {
+        acceptBtn.style.backgroundColor = '#e0e0e0';
+        acceptBtn.style.borderColor = '#ccc';
+        acceptBtn.querySelector('.status-label').style.color = '#666';
+    } else {
+        acceptBtn.style.backgroundColor = '#f5f5f5';
+        acceptBtn.style.borderColor = '#ccc';
+        acceptBtn.querySelector('.status-label').style.color = '#666';
+    }
+});
+
+  // Загружаем данные при старте
+  window.addEventListener('DOMContentLoaded', async () => {
+    parametersDatabase = await loadKnowledgeData('gosts.json');
+
+    // Теперь можно безопасно использовать parametersDatabase
+    // Например, инициализировать чек-лист
+    initChecklistApp(); // <-- твоя функция инициализации чек-листа
+  });
+    // Пример: если у тебя есть функция renderChecklist() — вызывай её после загрузки
+    function initChecklistApp() {
+    // Здесь ты можешь запустить весь свой код:
+    // updateStandardOptions(), generateBtn.addEventListener(...) и т.д.
+    console.log('✅ parametersDatabase загружен:', parametersDatabase);
+  }
+
+
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+      <script src="script.js"></script>
+</body>
+</html>
