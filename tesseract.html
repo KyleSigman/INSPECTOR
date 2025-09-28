@@ -2,6 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>pdf > html</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="https://unpkg.com/tesseract.js@5.0.3/dist/tesseract.min.js"></script>
@@ -551,52 +552,39 @@ function groupBlocksIntoRows(blocks) {
     foundRows.forEach((row, idx) => {
       let cardHtml = `<div class="match-card"><strong>Найдено (строка ${structuredRows.indexOf(row)}):</strong><br>`;
 
-      if (headerIndex >= 0 && headerIndex < structuredRows.length) {
+      if (headerIndex >= 0 && headerIndex < structuredRows.length && window.columnBounds) {
         const headerRow = structuredRows[headerIndex];
-        const dataRow = row;
+        const columnBounds = window.columnBounds;
 
-        // Группируем в колонки
-        const headerColumns = detectColumns(headerRow.blocks);
-        const dataColumns = detectColumns(dataRow.blocks);
+        // Для каждой колонки — находим заголовок и данные
+        columnBounds.forEach(col => {
+  const headerInCol = headerRow.blocks.find(b => b.x >= col.left && b.x < col.right);
+  // Пропускаем колонки без заголовка
+  if (!headerInCol) return;
 
-        // Для каждой колонки — берём первый блок как метку
-        // Для каждой колонки — собираем ВСЕ блоки из данных
-headerColumns.forEach((headerCol, i) => {
-  const label = headerCol[0] ? headerCol[0].text : `Колонка ${i + 1}`;
-  
-  // Находим ВСЕ блоки данных в этой колонке
-  const allDataBlocks = [];
-  row.blocks.forEach(block => {
-    // Определяем, в какой колонке находится блок
-    const colIndex = headerColumns.findIndex(col => {
-      const firstBlock = col[0];
-      if (!firstBlock) return false;
-      // Используем X заголовка как центр колонки
-      const headerX = firstBlock.x;
-      return Math.abs(block.x - headerX) < 100; // допуск 100px
-    });
-    if (colIndex === i) {
-      allDataBlocks.push(block.text);
-    }
-  });
+  const dataInCol = row.blocks
+    .filter(b => b.x >= col.left && b.x < col.right)
+    .map(b => b.text);
 
-  const dataText = allDataBlocks.length > 0 ? allDataBlocks.join(', ') : '—';
-  cardHtml += `<div><span style="color:#8e44ad; font-weight:bold;">${label}:</span> ${dataText}</div>`;
+  const dataText = dataInCol.length ? dataInCol.join(', ') : '—';
+  cardHtml += `<div><span style="color:#8e44ad; font-weight:bold;">${headerInCol.text}:</span> ${dataText}</div>`;
 });
-        // headerColumns.forEach((col, i) => {
-        //   const label = col[0] ? col[0].text : `Колонка ${i + 1}`;
-        //   const dataBlock = dataColumns[i] ? dataColumns[i][0] : null;
-        //   const dataText = dataBlock ? dataBlock.text : '—';
+        // columnBounds.forEach((col, i) => {
+        //   // Заголовок в этой колонке
+        //   const headerInCol = headerRow.blocks.find(b => b.x >= col.left && b.x < col.right);
+        //   // Все данные в этой колонке
+        //   const dataInCol = row.blocks
+        //     .filter(b => b.x >= col.left && b.x < col.right)
+        //     .map(b => b.text);
+
+        //   const label = headerInCol ? headerInCol.text : `Колонка ${i + 1}`;
+        //   const dataText = dataInCol.length ? dataInCol.join(', ') : '—';
         //   cardHtml += `<div><span style="color:#8e44ad; font-weight:bold;">${label}:</span> ${dataText}</div>`;
         // });
       } else {
-        // Без шапки — выводим все блоки строки
-        row.blocks.forEach((block, i) => {
-  cardHtml += `<div>[${i}] X:${block.x.toFixed(0)} Y:${block.y.toFixed(0)} → ${block.text}</div>`;
-});
-        // row.blocks.forEach(block => {
-        //   cardHtml += `<div>${block.text}</div>`;
-        // });
+        row.blocks.forEach(block => {
+          cardHtml += `<div>${block.text}</div>`;
+        });
       }
 
       cardHtml += '</div>';
@@ -606,6 +594,80 @@ headerColumns.forEach((headerCol, i) => {
     resultDiv.innerHTML = '<div style="color:#d9534f">Не найдено</div>';
   }
 };
+
+//         document.getElementById('searchInput').oninput = () => {
+//   const query = document.getElementById('searchInput').value;
+//   const exactMatch = document.getElementById('exactMatch').checked;
+//   const headerIndex = parseInt(document.getElementById('headerFloorSelect').value);
+//   const resultDiv = document.getElementById('searchResult');
+  
+//   if (!query) {
+//     resultDiv.innerHTML = '';
+//     return;
+//   }
+
+//   const foundRows = findRowByQuery(query, exactMatch);
+//   if (foundRows.length > 0) {
+//     resultDiv.innerHTML = '';
+//     foundRows.forEach((row, idx) => {
+//       let cardHtml = `<div class="match-card"><strong>Найдено (строка ${structuredRows.indexOf(row)}):</strong><br>`;
+
+//       if (headerIndex >= 0 && headerIndex < structuredRows.length) {
+//         const headerRow = structuredRows[headerIndex];
+//         const dataRow = row;
+
+//         // Группируем в колонки
+//         const headerColumns = detectColumns(headerRow.blocks);
+//         const dataColumns = detectColumns(dataRow.blocks);
+
+//         // Для каждой колонки — берём первый блок как метку
+//         // Для каждой колонки — собираем ВСЕ блоки из данных
+// headerColumns.forEach((headerCol, i) => {
+//   const label = headerCol[0] ? headerCol[0].text : `Колонка ${i + 1}`;
+  
+//   // Находим ВСЕ блоки данных в этой колонке
+//   const allDataBlocks = [];
+//   row.blocks.forEach(block => {
+//     // Определяем, в какой колонке находится блок
+//     const colIndex = headerColumns.findIndex(col => {
+//       const firstBlock = col[0];
+//       if (!firstBlock) return false;
+//       // Используем X заголовка как центр колонки
+//       const headerX = firstBlock.x;
+//       return Math.abs(block.x - headerX) < 100; // допуск 100px
+//     });
+//     if (colIndex === i) {
+//       allDataBlocks.push(block.text);
+//     }
+//   });
+
+//   const dataText = allDataBlocks.length > 0 ? allDataBlocks.join(', ') : '—';
+//   cardHtml += `<div><span style="color:#8e44ad; font-weight:bold;">${label}:</span> ${dataText}</div>`;
+// });
+//         // headerColumns.forEach((col, i) => {
+//         //   const label = col[0] ? col[0].text : `Колонка ${i + 1}`;
+//         //   const dataBlock = dataColumns[i] ? dataColumns[i][0] : null;
+//         //   const dataText = dataBlock ? dataBlock.text : '—';
+//         //   cardHtml += `<div><span style="color:#8e44ad; font-weight:bold;">${label}:</span> ${dataText}</div>`;
+//         // });
+//       } else {
+//         // Без шапки — выводим все блоки строки
+//         row.blocks.forEach((block, i) => {
+//   cardHtml += `<div>[${i}] X:${block.x.toFixed(0)} Y:${block.y.toFixed(0)} → ${block.text}</div>`;
+// });
+//         // row.blocks.forEach(block => {
+//         //   cardHtml += `<div>${block.text}</div>`;
+//         // });
+//       }
+
+//       cardHtml += '</div>';
+//       resultDiv.innerHTML += cardHtml;
+//     });
+//   } else {
+//     resultDiv.innerHTML = '<div style="color:#d9534f">Не найдено</div>';
+//   }
+// };
+
 
 //         document.getElementById('searchInput').oninput = () => {
 //   const query = document.getElementById('searchInput').value;
@@ -831,6 +893,19 @@ headerColumns.forEach((headerCol, i) => {
       // После того как нарисовал горизонтальные линии
 const verticalLines = detectVerticalLines();
 verticalBreaks = verticalLines.map(line => line.x).sort((a, b) => a - b);
+// Границы колонок: от левого края до первой линии, между линиями, и до правого края
+const columnBounds = [];
+if (verticalBreaks.length === 0) {
+  columnBounds.push({ left: 0, right: viewport.width });
+} else {
+  columnBounds.push({ left: 0, right: verticalBreaks[0] });
+  for (let i = 0; i < verticalBreaks.length - 1; i++) {
+    columnBounds.push({ left: verticalBreaks[i], right: verticalBreaks[i + 1] });
+  }
+  columnBounds.push({ left: verticalBreaks[verticalBreaks.length - 1], right: viewport.width });
+}
+// Сохраняем глобально
+window.columnBounds = columnBounds;
 
 verticalLines.forEach(line => {
   const circle = document.createElement('div');
@@ -986,7 +1061,7 @@ function detectColumns(blocks) {
     // Берём первый блок как превью
     const preview = row.blocks.map(b => b.text).join(' | ').substring(0, 50);
     // const preview = row.blocks.length ? row.blocks[0].text.substring(0, 30) : 'Пусто';
-    option.textContent = `Этаж ${i + 1}: ${preview}`;
+    option.textContent = `уровень ${i + 1}: ${preview}`;
     select.appendChild(option);
   });
   
