@@ -535,7 +535,8 @@ function groupBlocksIntoRows(blocks) {
         document.getElementById('detectLinesBtn').disabled = false;
         document.getElementById('searchInput').disabled = false;
 
-        document.getElementById('searchInput').oninput = () => {
+// === КНОПКИ В КАРТОЧКЕ ПОИСКА ===
+document.getElementById('searchInput').oninput = () => {
   const query = document.getElementById('searchInput').value;
   const exactMatch = document.getElementById('exactMatch').checked;
   const headerIndex = parseInt(document.getElementById('headerFloorSelect').value);
@@ -550,43 +551,37 @@ function groupBlocksIntoRows(blocks) {
   if (foundRows.length > 0) {
     resultDiv.innerHTML = '';
     foundRows.forEach((row, idx) => {
-      let cardHtml = `<div class="match-card"><strong>Найдено (строка ${structuredRows.indexOf(row)}):</strong><br>`;
+      const uniqueId = `card_${Date.now()}_${idx}`;
+let cardHtml = `<div id="${uniqueId}" class="match-card"><strong>Найдено (строка ${structuredRows.indexOf(row)}):</strong><br>`;
+      // let cardHtml = `<div class="match-card"><strong>Найдено (строка ${structuredRows.indexOf(row)}):</strong><br>`;
 
       if (headerIndex >= 0 && headerIndex < structuredRows.length && window.columnBounds) {
         const headerRow = structuredRows[headerIndex];
         const columnBounds = window.columnBounds;
 
-        // Для каждой колонки — находим заголовок и данные
         columnBounds.forEach(col => {
-  const headerInCol = headerRow.blocks.find(b => b.x >= col.left && b.x < col.right);
-  // Пропускаем колонки без заголовка
-  if (!headerInCol) return;
+          const headerInCol = headerRow.blocks.find(b => b.x >= col.left && b.x < col.right);
+          if (!headerInCol) return;
 
-  const dataInCol = row.blocks
-    .filter(b => b.x >= col.left && b.x < col.right)
-    .map(b => b.text);
-
-  const dataText = dataInCol.length ? dataInCol.join(', ') : '—';
-  cardHtml += `<div><span style="color:#8e44ad; font-weight:bold;">${headerInCol.text}:</span> ${dataText}</div>`;
-});
-        // columnBounds.forEach((col, i) => {
-        //   // Заголовок в этой колонке
-        //   const headerInCol = headerRow.blocks.find(b => b.x >= col.left && b.x < col.right);
-        //   // Все данные в этой колонке
-        //   const dataInCol = row.blocks
-        //     .filter(b => b.x >= col.left && b.x < col.right)
-        //     .map(b => b.text);
-
-        //   const label = headerInCol ? headerInCol.text : `Колонка ${i + 1}`;
-        //   const dataText = dataInCol.length ? dataInCol.join(', ') : '—';
-        //   cardHtml += `<div><span style="color:#8e44ad; font-weight:bold;">${label}:</span> ${dataText}</div>`;
-        // });
+          const dataInCol = row.blocks
+            .filter(b => b.x >= col.left && b.x < col.right)
+            .map(b => b.text);
+          const dataText = dataInCol.length ? dataInCol.join(', ') : '—';
+          cardHtml += `<div><span style="color:#8e44ad; font-weight:bold;">${headerInCol.text}:</span> ${dataText}</div>`;
+        });
       } else {
         row.blocks.forEach(block => {
           cardHtml += `<div>${block.text}</div>`;
         });
       }
 
+      // const uniqueId = `card_${Date.now()}_${idx}`;
+      cardHtml += `
+        <div style="margin-top:10px; display:flex; gap:8px;">
+          <button onclick="saveCardAsHtml('${uniqueId}')">💾 HTML</button>
+          <button onclick="saveCardForTelegram('${uniqueId}')">📱 TG</button>
+        </div>
+      `;
       cardHtml += '</div>';
       resultDiv.innerHTML += cardHtml;
     });
@@ -594,6 +589,120 @@ function groupBlocksIntoRows(blocks) {
     resultDiv.innerHTML = '<div style="color:#d9534f">Не найдено</div>';
   }
 };
+
+//         document.getElementById('searchInput').oninput = () => {
+//   const query = document.getElementById('searchInput').value;
+//   const exactMatch = document.getElementById('exactMatch').checked;
+//   const headerIndex = parseInt(document.getElementById('headerFloorSelect').value);
+//   const resultDiv = document.getElementById('searchResult');
+  
+//   if (!query) {
+//     resultDiv.innerHTML = '';
+//     return;
+//   }
+
+//   const foundRows = findRowByQuery(query, exactMatch);
+//   if (foundRows.length > 0) {
+//     resultDiv.innerHTML = '';
+//     foundRows.forEach((row, idx) => {
+//       let cardHtml = `<div class="match-card"><strong>Найдено (строка ${structuredRows.indexOf(row)}):</strong><br>`;
+
+//       if (headerIndex >= 0 && headerIndex < structuredRows.length && window.columnBounds) {
+//         const headerRow = structuredRows[headerIndex];
+//         const columnBounds = window.columnBounds;
+
+//         columnBounds.forEach(col => {
+//           const headerInCol = headerRow.blocks.find(b => b.x >= col.left && b.x < col.right);
+//           if (!headerInCol) return;
+
+//           const dataInCol = row.blocks
+//             .filter(b => b.x >= col.left && b.x < col.right)
+//             .map(b => b.text);
+//           const dataText = dataInCol.length ? dataInCol.join(', ') : '—';
+//           cardHtml += `<div><span style="color:#8e44ad; font-weight:bold;">${headerInCol.text}:</span> ${dataText}</div>`;
+//         });
+//       } else {
+//         row.blocks.forEach(block => {
+//           cardHtml += `<div>${block.text}</div>`;
+//         });
+//       }
+
+//       // Кнопки
+//       const uniqueId = `btns_${Date.now()}_${idx}`;
+//       cardHtml += `
+//         <div style="margin-top:10px; display:flex; gap:8px;">
+//           <button onclick="saveAsHtml('${uniqueId}')">💾 Сохранить HTML</button>
+//           <button onclick="saveForTelegram('${uniqueId}')">📱 Telegram</button>
+//         </div>
+//       `;
+//       cardHtml += '</div>';
+//       resultDiv.innerHTML += cardHtml;
+//     });
+//   } else {
+//     resultDiv.innerHTML = '<div style="color:#d9534f">Не найдено</div>';
+//   }
+// };
+
+//         document.getElementById('searchInput').oninput = () => {
+//   const query = document.getElementById('searchInput').value;
+//   const exactMatch = document.getElementById('exactMatch').checked;
+//   const headerIndex = parseInt(document.getElementById('headerFloorSelect').value);
+//   const resultDiv = document.getElementById('searchResult');
+  
+//   if (!query) {
+//     resultDiv.innerHTML = '';
+//     return;
+//   }
+
+//   const foundRows = findRowByQuery(query, exactMatch);
+//   if (foundRows.length > 0) {
+//     resultDiv.innerHTML = '';
+//     foundRows.forEach((row, idx) => {
+//       let cardHtml = `<div class="match-card"><strong>Найдено (строка ${structuredRows.indexOf(row)}):</strong><br>`;
+
+//       if (headerIndex >= 0 && headerIndex < structuredRows.length && window.columnBounds) {
+//         const headerRow = structuredRows[headerIndex];
+//         const columnBounds = window.columnBounds;
+
+//         // Для каждой колонки — находим заголовок и данные
+//         columnBounds.forEach(col => {
+//   const headerInCol = headerRow.blocks.find(b => b.x >= col.left && b.x < col.right);
+//   // Пропускаем колонки без заголовка
+//   if (!headerInCol) return;
+
+//   const dataInCol = row.blocks
+//     .filter(b => b.x >= col.left && b.x < col.right)
+//     .map(b => b.text);
+
+//   const dataText = dataInCol.length ? dataInCol.join(', ') : '—';
+//   cardHtml += `<div><span style="color:#8e44ad; font-weight:bold;">${headerInCol.text}:</span> ${dataText}</div>`;
+// });
+//         // columnBounds.forEach((col, i) => {
+//         //   // Заголовок в этой колонке
+//         //   const headerInCol = headerRow.blocks.find(b => b.x >= col.left && b.x < col.right);
+//         //   // Все данные в этой колонке
+//         //   const dataInCol = row.blocks
+//         //     .filter(b => b.x >= col.left && b.x < col.right)
+//         //     .map(b => b.text);
+
+//         //   const label = headerInCol ? headerInCol.text : `Колонка ${i + 1}`;
+//         //   const dataText = dataInCol.length ? dataInCol.join(', ') : '—';
+//         //   cardHtml += `<div><span style="color:#8e44ad; font-weight:bold;">${label}:</span> ${dataText}</div>`;
+//         // });
+//       } else {
+//         row.blocks.forEach(block => {
+//           cardHtml += `<div>${block.text}</div>`;
+//         });
+//       }
+
+//       cardHtml += '</div>';
+//       resultDiv.innerHTML += cardHtml;
+//     });
+//   } else {
+//     resultDiv.innerHTML = '<div style="color:#d9534f">Не найдено</div>';
+//   }
+// };
+
 
 //         document.getElementById('searchInput').oninput = () => {
 //   const query = document.getElementById('searchInput').value;
@@ -863,6 +972,8 @@ function groupBlocksIntoRows(blocks) {
       }
     });
     // === ОБНАРУЖЕНИЕ ЛИНИЙ ===
+
+
     document.getElementById('detectLinesBtn').addEventListener('click', async () => {
       if (!currentPage) return;
 
@@ -935,24 +1046,49 @@ verticalLines.forEach(line => {
 });
 
 // После рисования кружочков вверху — рисуем на каждом этаже
+// Рисуем точки ТОЛЬКО внутри этажей
 structuredRows.forEach(row => {
-  const midY = row.y; // или (row.topLine?.y || 0) + 10
+  const topY = row.topLine ? row.topLine.y : 0;
+  const bottomY = row.bottomLine ? row.bottomLine.y : canvas.height;
+  const midY = (topY + bottomY) / 2;
+
   verticalLines.forEach(line => {
-    const circle = document.createElement('div');
-    circle.style.cssText = `
-      position: absolute;
-      width: 6px;
-      height: 6px;
-      background: red;
-      border-radius: 50%;
-      left: ${line.x - 3}px;
-      top: ${midY - 3}px;
-      z-index: 9998;
-      pointer-events: none;
-    `;
-    canvasContainer.appendChild(circle);
+    // Проверяем, что линия пересекает этаж
+    if (line.startY < bottomY && line.endY > topY) {
+      const circle = document.createElement('div');
+      circle.style.cssText = `
+        position: absolute;
+        width: 6px;
+        height: 6px;
+        background: red;
+        border-radius: 50%;
+        left: ${line.x - 3}px;
+        top: ${midY - 3}px;
+        z-index: 9998;
+        pointer-events: none;
+      `;
+      canvasContainer.appendChild(circle);
+    }
   });
 });
+// structuredRows.forEach(row => {
+//   const midY = row.y; // или (row.topLine?.y || 0) + 10
+//   verticalLines.forEach(line => {
+//     const circle = document.createElement('div');
+//     circle.style.cssText = `
+//       position: absolute;
+//       width: 6px;
+//       height: 6px;
+//       background: red;
+//       border-radius: 50%;
+//       left: ${line.x - 3}px;
+//       top: ${midY - 3}px;
+//       z-index: 9998;
+//       pointer-events: none;
+//     `;
+//     canvasContainer.appendChild(circle);
+//   });
+// });
       
 const blocks = currentTextContent.items
         .filter(item => item.str.trim())
@@ -1713,8 +1849,139 @@ document.getElementById('exportFullHtmlBtn').addEventListener('click', async () 
   }
 });
   
+
+// === СОХРАНЕНИЕ КАРТОЧКИ КАК HTML (как в твоём референсе) ===
+window.saveCardAsHtml = async function(cardId) {
+  const card = document.querySelector(`#${cardId}`).closest('.match-card');
+  if (!card) return;
+
+  // Собираем только нужные строки как отдельные <div>
+  const lines = Array.from(card.querySelectorAll('div')).filter(line => {
+    return !line.querySelector('button') && !line.querySelector('strong');
+  });
+
+  // Берём innerHTML каждого блока — он уже содержит свою структуру
+  const content = lines.map(line => line.innerHTML).join('<br>'); // или просто .join('')
+
+  // Оборачиваем в стилизованный блок
+  const html = `
+    <div style="background: #eaf7ff; border-left: 4px solid #3498db; padding: 16px; margin: 10px; font-family: Arial, sans-serif; line-height: 1.6;">
+      ${content}
+    </div>
+  `.trim();
+
+  try {
+    await navigator.clipboard.writeText(html);
+    document.getElementById('status').textContent = '✅ Карточка в HTML!';
+  } catch (err) {
+    // Альтернатива: сохранить как файл
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'card.html';
+    a.click();
+    URL.revokeObjectURL(url);
+    document.getElementById('status').textContent = '✅ Сохранено как card.html';
+  }
+};
+// window.saveCardAsHtml = async function(cardId) {
+//   const card = document.querySelector(`#${cardId}`).closest('.match-card');
+//   if (!card) return;
+
+//   // Извлекаем только текстовые строки (без кнопок)
+//   let content = '';
+//   const lines = card.querySelectorAll('div');
+//   lines.forEach(line => {
+//     if (!line.querySelector('button') && !line.querySelector('strong')) {
+//       content += line.innerHTML + '\n';
+//     }
+//   });
+
+//   const html = `<div style="background: #eaf7ff; border-left: 4px solid #3498db; padding: 16px; margin: 10px; font-family: Arial, sans-serif; line-height: 1.6;">${content.replace(/<div>/g, '<div style="margin:4px 0;">')}</div>`;
+//   // const html = `<div style="position: relative; background: #eaf7ff; border-left: 4px solid #3498db; padding: 12px;">${content}</div>`;
+
+//   try {
+//     await navigator.clipboard.writeText(html);
+//     document.getElementById('status').textContent = '✅ Карточка в HTML!';
+//   } catch (err) {
+//     // Альтернатива: файл
+//     const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+//     const url = URL.createObjectURL(blob);
+//     const a = document.createElement('a');
+//     a.href = url;
+//     a.download = 'card.html';
+//     a.click();
+//     URL.revokeObjectURL(url);
+//     document.getElementById('status').textContent = '✅ Сохранено как card.html';
+//   }
+// };
+
+// === СОХРАНЕНИЕ ДЛЯ TELEGRAM ===
+// window.saveCardForTelegram = async function(cardId) {
+//   const card = document.querySelector(`#${cardId}`).closest('.match-card');
+//   if (!card) return;
+
+//   let text = '';
+//   const labels = card.querySelectorAll('span[style*="color:#8e44ad"]');
+//   labels.forEach(label => {
+//     const key = label.textContent.trim();
+//     const value = label.nextSibling?.textContent?.trim() || '—';
+//     text += `*${key}:* _${value}_\n`;
+//   });
+
+//   if (!text) {
+//     const lines = card.querySelectorAll('div');
+//     lines.forEach(line => {
+//       if (!line.querySelector('button') && !line.querySelector('strong')) {
+//         text += line.textContent.trim() + '\n';
+//       }
+//     });
+//   }
+
+//   try {
+//     await navigator.clipboard.writeText(text.trim());
+//     document.getElementById('status').textContent = '✅ Для Telegram!';
+//   } catch (err) {
+//     alert('Ошибка копирования');
+//   }
+// };
+window.saveCardForTelegram = async function(cardId) {
+  const card = document.querySelector(`#${cardId}`).closest('.match-card');
+  if (!card) return;
+
+  let text = '';
+  const labels = card.querySelectorAll('span[style*="color:#8e44ad"]');
+  labels.forEach(label => {
+    const key = label.textContent.trim();
+    const value = label.nextSibling?.textContent?.trim() || '—';
+    text += `${key}: ${value}\n`;
+  });
+
+  if (!text) {
+    const lines = card.querySelectorAll('div');
+    lines.forEach(line => {
+      if (!line.querySelector('button') && !line.querySelector('strong')) {
+        const content = line.textContent.trim();
+        if (content) text += content + '\n';
+      }
+    });
+  }
+
+  // Оборачиваем ВЕСЬ текст в спойлер Telegram
+  const spoilerText = `||${text.trim()}||`;
+
+  try {
+    await navigator.clipboard.writeText(spoilerText);
+    document.getElementById('status').textContent = '✅ Для Telegram!';
+  } catch (err) {
+    alert('Ошибка копирования');
+  }
+};
   
   </script>
+
+
   
 </body>
 </html>
