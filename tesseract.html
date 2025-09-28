@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>pdf > html</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://unpkg.com/tesseract.js@5.0.3/dist/tesseract.min.js"></script>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      margin: 10px;
+      background: #f9f9f9;
+      display: flex;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      flex: 1;
+    }
+    #canvasContainer {
+      position: relative;
+      display: inline-block;
+      border: 1px solid #ccc;
+      background: white;
+      margin-top: 10px;
+    }
+    .debug-label {
+      position: absolute;
+      font-size: 10px;
+      pointer-events: none;
+      background: rgba(255, 255, 0, 0.7);
+      border: 1px solid red;
+      padding: 1px 3px;
+      white-space: nowrap;
+      z-index: 10;
+      transform: translateY(-100%);
+    }
+    .line-label {
+      background: rgba(255, 0, 0, 0.7) !important;
+      border-color: black !important;
+      color: white !important;
+      font-weight: bold;
+    }
+    pre {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 12px;
+      border-radius: 4px;
+      overflow: auto;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+    .panel {
+      background: #fff;
+      padding: 12px;
+      border-radius: 6px;
+      margin: 10px 0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      
+    }
+    .buttons
+    {
+      width: 100%; height: auto;
+      position: relative;
+      margin: 5px;
+    }
+    input[type="text"] {
+      width: 90%;
+      padding: 8px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .match-card {
+      background: #e8f4fd;
+      border-left: 4px solid #007acc;
+      padding: 12px;
+      margin-top: 10px;
+      border-radius: 4px;
+    }
+    button {
+      padding: 8px 16px;
+      margin: 0 6px;
+      background: #007acc;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover { opacity: 0.9; }
+    button:disabled { background: #ccc; cursor: not-allowed; }
+    #detectLinesBtn { background: #8e3dff; }
+    #status { 
+      color: #d9534f; 
+      font-weight: bold;
+      margin: 8px 0;
+    }
+
+    /* Панель управления */
+    #floorPanel {
+      width: 280px;
+      background: white;
+      border-left: 1px solid #ddd;
+      padding: 15px;
+      box-shadow: -2px 0 5px rgba(0,0,0,0.1);
+      position: fixed;
+      top: 0;
+      right: 0;
+      height: 100vh;
+      overflow-y: auto;
+      z-index: 1000;
+      display: none;
+    }
+    #floorNav {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+    #floorNav button {
+      padding: 6px 12px;
+      background: #3498db;
+      font-size: 18px;
+    }
+    #currentFloor {
+      font-size: 18px;
+      font-weight: bold;
+      text-align: center;
+      padding: 8px;
+      background: #ecf0f1;
+      border-radius: 4px;
+    }
+    .floor-info {
+      background: #f8f9fa;
+      padding: 10px;
+      border-radius: 4px;
+      margin: 10px 0;
+    }
+    .floor-content {
+      background: #fff;
+      padding: 10px;
+      border: 1px solid #eee;
+      border-radius: 4px;
+      margin-top: 10px;
+      font-family: monospace;
+      font-size: 12px;
+      white-space: pre-wrap;
+    }
+    .exact-match {
+      margin: 10px 0;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .highlight-box {
+      position: absolute;
+      border: 3px solid #3498db;
+      pointer-events: none;
+      z-index: 5;
+    }
+    .pdf-table {
+        position: absolute;
+  border-collapse: collapse;
+  font-family: Arial, sans-serif;
+  width: 50%;
+  margin: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  border-radius: 15px;
+  overflow: hidden;
+}
+
+.pdf-table td,
+.pdf-table th {
+  border: 1px solid #ddd;
+  padding: 10px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.pdf-table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+h2 
+{
+  position: relative; padding: 0; margin: 0; color: rgb(134, 93, 247); margin-left: 120px;
+}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>pdf > html</h2>
+    <p style="padding: 5px;"><a href="index.html" style="color: inherit; text-decoration: none; display: block; height: 100%; position: absolute; top: 0; left: 0; margin: 10px;">↩️ в меню</a></p>
+    <div class="panel">
+      <input type="file" id="pdfFile" accept="application/pdf" />
+<div class="buttons">
+  <button id="loadBtn">Загрузить</button>
+  <button id="detectLinesBtn" disabled>🔍 Анализ</button>
+</div>
+      <div id="status">Выберите PDF...</div>
+    </div>
+
+    <div class="panel">
+      <label>Поиск по значению:</label><br>
+      <input type="text" id="searchInput" placeholder="Введите текст..." disabled>
+      <div class="exact-match">
+        <input type="checkbox" id="exactMatch" />
+        <label for="exactMatch">Точное совпадение</label>
+      </div>
+      <div id="searchResult"></div>
+    </div>
+    <button id="showHtmlBtn">👀 Показать html</button>
+    <button id="copyHtmlBtn">📋 Копировать</button>
+
+
+<!-- Слой для отображения HTML-таблицы -->
+<div id="htmlOverlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:white; z-index:1000; padding:20px; overflow:auto;">
+  <button id="closeHtmlOverlay" style="position:fixed; top:5px; left:5px; background:#e74c3c; color:white; border:none; width:30px; height:30px; border-radius:50%; font-weight:bold; cursor:pointer;">×</button>
+  <div id="renderedHtmlTable"></div>
+</div>
+
+    <!-- <button id="createHtmlTableBtn">📄 Создать HTML-таблицу</button> -->
+<div class="panel" id="htmlTableOutput" style="display:none;">
+  <h3>HTML-таблица:</h3>
+  <pre id="htmlTableCode"></pre>
+</div>
+
+    <div id="canvasContainer">
+      <canvas id="pdfCanvas"></canvas>
+    </div>
+
+    <div class="panel">
+      <h3>Структурированные строки (по линиям или по Y):</h3>
+      <pre id="output"></pre>
+    </div>
+  </div>
+
+  <!-- Панель управления этажами -->
+  <div id="floorPanel">
+    <h3>Навигация</h3>
+    <div id="floorNav">
+      <button id="prevFloor">←</button>
+      <div id="currentFloor">-</div>
+      <button id="nextFloor">→</button>
+    </div>
+    <div class="floor-info">
+      <strong>строки:</strong><br>
+      <span id="floorTopLine">-</span><br>
+      <span id="floorBottomLine">-</span>
+    </div>
+    <div class="floor-content" id="floorContent">
+      [Содержимое этажа]
+    </div>
+  </div>
+
+  <script>
+    // Настройка PDF.js
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    // Глобальные переменные
+    let canvas = null;
+    let ctx = null;
+    let viewport = null;
+    let currentPage = null;
+    let currentTextContent = null;
+    let structuredRows = [];
+    let horizontalLines = [];
+    let currentFloorIndex = -1;
+
+    // === ФУНКЦИЯ: Обнаружение горизонтальных линий ===
+    function detectHorizontalLines() {
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imageData.data;
+      const threshold = 128;
+      const minLineLength = 80;
+      const lines = [];
+
+      for (let y = 0; y < canvas.height; y++) {
+        let startX = -1;
+        for (let x = 0; x <= canvas.width; x++) {
+          if (x < canvas.width) {
+            const i = (y * canvas.width + x) * 4;
+            const brightness = (data[i] + data[i+1] + data[i+2]) / 3;
+            if (brightness <= threshold) {
+              if (startX === -1) startX = x;
+            } else {
+              if (startX !== -1 && (x - startX) >= minLineLength) {
+                lines.push({ y, startX, endX: x - 1 });
+              }
+              startX = -1;
+            }
+          } else {
+            if (startX !== -1 && (x - startX) >= minLineLength) {
+              lines.push({ y, startX, endX: x - 1 });
+            }
+          }
+        }
+      }
+      return lines;
+    }
+
+    // === ФУНКЦИЯ: Группировка блоков по "этажам" между линиями ===
+    function groupBlocksIntoRows(blocks) {
+      if (horizontalLines.length === 0) {
+        const TOLERANCE = 5;
+        const rows = [];
+        const sortedByY = blocks.sort((a, b) => a.y - b.y);
+        for (const block of sortedByY) {
+          const existingRow = rows.find(row => Math.abs(row.y - block.y) <= TOLERANCE);
+          if (existingRow) {
+            existingRow.blocks.push(block);
+          } else {
+            rows.push({ y: block.y, blocks: [block] });
+          }
+        }
+        rows.forEach(row => row.blocks.sort((a, b) => a.x - b.x));
+        return rows;
+      }
+
+      const sortedLines = [...horizontalLines].sort((a, b) => a.y - b.y);
+      const rows = [];
+
+      blocks.forEach(block => {
+        let rowIndex = -1;
+        for (let i = 0; i < sortedLines.length - 1; i++) {
+          if (block.y > sortedLines[i].y && block.y < sortedLines[i + 1].y) {
+            rowIndex = i;
+            break;
+          }
+        }
+        if (rowIndex === -1) rowIndex = sortedLines.length - 1;
+
+        if (!rows[rowIndex]) {
+          rows[rowIndex] = { 
+            y: sortedLines[rowIndex]?.y || block.y, 
+            topLine: sortedLines[rowIndex],
+            bottomLine: sortedLines[rowIndex + 1],
+            blocks: [] 
+          };
+        }
+        rows[rowIndex].blocks.push(block);
+      });
+
+      const filteredRows = rows.filter(row => row !== undefined && row.blocks && row.blocks.length > 0);
+      filteredRows.forEach(row => row.blocks.sort((a, b) => a.x - b.x));
+      return filteredRows;
+    }
+
+    // === ФУНКЦИЯ: Поиск строки по запросу ===
+    function findRowByQuery(query, exactMatch = false) {
+      if (!query.trim()) return null;
+      
+      return structuredRows.filter(row => {
+        return row.blocks.some(block => {
+          if (exactMatch) {
+            return block.text.toLowerCase() === query.toLowerCase();
+          } else {
+            return block.text.toLowerCase().includes(query.toLowerCase());
+          }
+        });
+      });
+    }
+
+    // === ЗАГРУЗКА PDF ===
+    document.getElementById('loadBtn').addEventListener('click', async () => {
+      const file = document.getElementById('pdfFile').files[0];
+      if (!file) return alert('Выберите PDF');
+
+      document.getElementById('status').textContent = 'Загрузка PDF...';
+      document.getElementById('detectLinesBtn').disabled = true;
+      document.getElementById('searchInput').disabled = true;
+
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        currentPage = await pdf.getPage(1);
+
+        viewport = currentPage.getViewport({ scale: 2.0 });
+        canvas = document.getElementById('pdfCanvas');
+        ctx = canvas.getContext('2d');
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        await currentPage.render({ canvasContext: ctx, viewport }).promise;
+
+        currentTextContent = await currentPage.getTextContent();
+        const blocks = currentTextContent.items
+          .filter(item => item.str.trim())
+          .map(item => {
+            const [,, , , x, y] = item.transform;
+            const screenPoint = viewport.convertToViewportPoint(x, y);
+            return { 
+              text: item.str.trim(), 
+              x: screenPoint[0], 
+              y: screenPoint[1] 
+            };
+          });
+
+        structuredRows = groupBlocksIntoRows(blocks);
+        updateOutputAndLabels();
+
+        document.getElementById('status').textContent = 'PDF Готов.';
+        document.getElementById('detectLinesBtn').disabled = false;
+        document.getElementById('searchInput').disabled = false;
+
+        // Поиск
+        document.getElementById('searchInput').oninput = () => {
+          const query = document.getElementById('searchInput').value;
+          const exactMatch = document.getElementById('exactMatch').checked;
+          const resultDiv = document.getElementById('searchResult');
+          
+          if (!query) {
+            resultDiv.innerHTML = '';
+            return;
+          }
+
+          const foundRows = findRowByQuery(query, exactMatch);
+          if (foundRows.length > 0) {
+            resultDiv.innerHTML = '';
+            foundRows.forEach((row, idx) => {
+              const rowText = row.blocks.map(b => b.text).join(' | ');
+              resultDiv.innerHTML += `<div class="match-card"><strong>Найдено (строка ${idx}):</strong> ${rowText}</div>`;
+            });
+          } else {
+            resultDiv.innerHTML = '<div style="color:#d9534f">Не найдено</div>';
+          }
+        };
+
+      } catch (error) {
+        document.getElementById('status').textContent = 'Ошибка: ' + error.message;
+        console.error(error);
+      }
+    });
+
+    // === ОБНАРУЖЕНИЕ ЛИНИЙ ===
+    document.getElementById('detectLinesBtn').addEventListener('click', async () => {
+      if (!currentPage) return;
+
+      document.getElementById('status').textContent = 'Анализ...';
+      document.querySelectorAll('.debug-label').forEach(el => el.remove());
+
+      horizontalLines = detectHorizontalLines();
+
+      await currentPage.render({ canvasContext: ctx, viewport }).promise;
+
+      ctx.strokeStyle = '#00ff00';
+      ctx.lineWidth = 2;
+      horizontalLines.forEach(line => {
+        ctx.beginPath();
+        ctx.moveTo(line.startX, line.y);
+        ctx.lineTo(line.endX, line.y);
+        ctx.stroke();
+
+        // 🔥 БЭЙДЖИК ТОЧНО НА ЛИНИИ — без отступа вверх
+        const label = document.createElement('div');
+        label.className = 'debug-label line-label';
+        label.textContent = `Y=${Math.round(line.y)}`;
+        label.style.left = `${line.startX + 10}px`;
+        label.style.top = `${line.y}px`; // ТОЧНО НА ЛИНИИ — без смещения
+        document.getElementById('canvasContainer').appendChild(label);
+      });
+
+      const blocks = currentTextContent.items
+        .filter(item => item.str.trim())
+        .map(item => {
+          const [,, , , x, y] = item.transform;
+          const screenPoint = viewport.convertToViewportPoint(x, y);
+          return { 
+            text: item.str.trim(), 
+            x: screenPoint[0], 
+            y: screenPoint[1] 
+          };
+        });
+
+      structuredRows = groupBlocksIntoRows(blocks);
+      updateOutputAndLabels();
+      currentFloorIndex = -1; // сбросить текущий этаж
+      updateFloorPanel(); // обновить панель
+
+      document.getElementById('status').textContent = `Найдено: ${horizontalLines.length}.`;
+    });
+
+    // === ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ: Обновить вывод и метки ===
+    function updateOutputAndLabels() {
+      document.getElementById('output').innerHTML = '';
+      document.querySelectorAll('.debug-label:not(.line-label)').forEach(el => el.remove());
+
+      structuredRows.forEach((row, rowIndex) => {
+        document.getElementById('output').innerHTML += `--- Строка ${rowIndex} (Y=${row.y.toFixed(1)}) ---\n`;
+        row.blocks.forEach((block, i) => {
+          const screenX = block.x;
+          const screenY = block.y;
+
+          document.getElementById('output').innerHTML += 
+            `  [${i}] X:${block.x.toFixed(1)} | "${block.text}"\n`;
+
+          const label = document.createElement('div');
+          label.className = 'debug-label';
+          label.textContent = `"${block.text}"`;
+          label.style.left = `${screenX}px`;
+          label.style.top = `${screenY}px`;
+          document.getElementById('canvasContainer').appendChild(label);
+        });
+      });
+    }
+
+    // === УПРАВЛЕНИЕ ЭТАЖАМИ ===
+    function updateFloorPanel() {
+      const floorCount = structuredRows.length;
+      if (floorCount === 0) {
+        document.getElementById('currentFloor').textContent = '-';
+        document.getElementById('floorTopLine').textContent = '-';
+        document.getElementById('floorBottomLine').textContent = '-';
+        document.getElementById('floorContent').textContent = '[Нет строк]';
+        return;
+      }
+
+      if (currentFloorIndex < 0) currentFloorIndex = 0;
+      if (currentFloorIndex >= floorCount) currentFloorIndex = floorCount - 1;
+
+      const currentFloor = structuredRows[currentFloorIndex];
+      document.getElementById('currentFloor').textContent = `${currentFloorIndex + 1} из ${floorCount}`;
+
+      const topLine = currentFloor.topLine ? `Y=${Math.round(currentFloor.topLine.y)}` : 'Верхняя граница';
+      const bottomLine = currentFloor.bottomLine ? `Y=${Math.round(currentFloor.bottomLine.y)}` : 'Нижняя граница';
+      document.getElementById('floorTopLine').textContent = topLine;
+      document.getElementById('floorBottomLine').textContent = bottomLine;
+
+      const content = currentFloor.blocks.map((b, i) => `  [${i}] "${b.text}"`).join('\n');
+      document.getElementById('floorContent').textContent = content;
+
+      // Рисуем синюю рамку вокруг этажа
+      drawFloorHighlight(currentFloor);
+    }
+
+//     document.getElementById('createHtmlTableBtn').addEventListener('click', () => {
+//   if (structuredRows.length === 0) {
+//     alert('Сначала обнаружьте линии!');
+//     return;
+//   }
+
+//   const htmlTable = generateHtmlTable();
+//   document.getElementById('htmlTableCode').textContent = htmlTable;
+//   document.getElementById('htmlTableOutput').style.display = 'block';
+// });
+
+function generateHtmlTable() {
+  if (structuredRows.length < 2) {
+    return '<p>Нужно минимум 2 строки</p>';
+  }
+
+  // Берём ВТОРОЙ этаж (индекс 1) — предполагаем, что это первая строка данных
+//   const referenceRow = structuredRows[1];
+let referenceRow = structuredRows[0];
+for (let row of structuredRows) {
+  if (row.blocks.length > referenceRow.blocks.length) {
+    referenceRow = row;
+  }
+}
+  if (!referenceRow || referenceRow.blocks.length === 0) {
+    return '<p>Нет данных во второй строке</p>';
+  }
+
+  // Сортируем блоки по X
+  const sortedBlocks = [...referenceRow.blocks].sort((a, b) => a.x - b.x);
+
+  // Определяем границы столбцов по разрывам > 80px
+  const COLUMN_GAP = 80; // пикселей
+  const columns = [];
+  let currentStart = sortedBlocks[0].x;
+
+  for (let i = 0; i < sortedBlocks.length; i++) {
+    const current = sortedBlocks[i];
+    const next = sortedBlocks[i + 1];
+
+    if (!next || (next.x - current.x) > COLUMN_GAP) {
+      // Конец столбца
+      columns.push({
+        minX: currentStart,
+        maxX: current.x + (current.text.length * 6), // приблизительная ширина текста
+        center: (currentStart + current.x) / 2
+      });
+      if (next) currentStart = next.x;
+    }
+  }
+
+  if (columns.length === 0) {
+    return '<p>Не удалось определить столбцы</p>';
+  }
+
+  // Генерируем HTML
+//   let html = '<table border="1" cellpadding="12" cellspacing="0" style="border-collapse: collapse; font-family: Arial, sans-serif; width: 80%; margin: 40px auto; box-shadow: 0 10px 30px rgba(0,0,0,0.3); border-radius: 15px; overflow: hidden;">\n';
+//   let html = '<table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; font-family: Arial, sans-serif; margin: 20px 0;">\n';
+    let html = '<table class="pdf-table">\n';
+
+  structuredRows.forEach(row => {
+    html += '  <tr>\n';
+    
+    // Создаём ячейки по количеству столбцов
+    const cells = Array(columns.length).fill('');
+
+    // Распределяем блоки по столбцам
+    row.blocks.forEach(block => {
+      // Находим ближайший столбец по X
+      let bestColIndex = 0;
+      let minDist = Math.abs(block.x - columns[0].center);
+      
+      for (let i = 1; i < columns.length; i++) {
+        const dist = Math.abs(block.x - columns[i].center);
+        if (dist < minDist) {
+          minDist = dist;
+          bestColIndex = i;
+        }
+      }
+      
+      cells[bestColIndex] = cells[bestColIndex] ? 
+        `${cells[bestColIndex]}<br>${block.text}` : 
+        block.text;
+    });
+
+    cells.forEach(cell => {
+  html += `    <td>${cell || ''}</td>\n`;
+});
+
+    // cells.forEach(cell => {
+    //   html += `    <td>${cell || ''}</td>\n`;
+    // });
+
+    html += '  </tr>\n';
+  });
+
+  html += '</table>';
+  return html;
+}
+
+
+// function generateHtmlTable() {
+//   if (structuredRows.length === 0) return '<p>Нет строк</p>';
+
+//   // Собираем все X-координаты
+//   const allXs = structuredRows
+//     .flatMap(row => row.blocks)
+//     .map(block => block.x)
+//     .sort((a, b) => a - b);
+
+//   if (allXs.length === 0) return '<p>Нет данных</p>';
+
+//   // Группируем X в столбцы с допуском
+//   const COLUMN_TOLERANCE = 20; // пикселей
+//   const columns = [];
+//   let currentColumn = { minX: allXs[0], maxX: allXs[0], blocks: [] };
+
+//   for (let x of allXs) {
+//     if (x - currentColumn.maxX <= COLUMN_TOLERANCE) {
+//       // Добавляем в текущий столбец
+//       currentColumn.maxX = x;
+//     } else {
+//       // Завершаем текущий столбец и начинаем новый
+//       columns.push({ ...currentColumn });
+//       currentColumn = { minX: x, maxX: x, blocks: [] };
+//     }
+//   }
+//   columns.push(currentColumn); // последний столбец
+
+//   // Теперь для каждой строки распределяем блоки по столбцам
+//   let html = '<table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; font-family: Arial, sans-serif; margin: 20px 0;">\n';
+
+//   structuredRows.forEach(row => {
+//     html += '  <tr>\n';
+    
+//     // Создаём массив ячеек по количеству столбцов
+//     const cells = Array(columns.length).fill('');
+
+//     // Распределяем блоки по столбцам
+//     row.blocks.forEach(block => {
+//       // Находим столбец, в который попадает блок
+//       const colIndex = columns.findIndex(col => 
+//         block.x >= col.minX - COLUMN_TOLERANCE/2 && 
+//         block.x <= col.maxX + COLUMN_TOLERANCE/2
+//       );
+      
+//       if (colIndex !== -1) {
+//         cells[colIndex] = cells[colIndex] ? 
+//           `${cells[colIndex]}<br>${block.text}` : 
+//           block.text;
+//       }
+//     });
+
+//     // Выводим ячейки
+//     cells.forEach(cell => {
+//       html += `    <td>${cell || ''}</td>\n`;
+//     });
+
+//     html += '  </tr>\n';
+//   });
+
+//   html += '</table>';
+//   return html;
+// } 
+
+function drawFloorHighlight(floor) {
+  // Удаляем старую рамку
+  const oldBox = document.querySelector('.highlight-box');
+  if (oldBox) oldBox.remove();
+
+  if (!floor) return;
+
+  // Координаты линий этажа
+  const topLineY = floor.topLine ? floor.topLine.y : 0;
+  const bottomLineY = floor.bottomLine ? floor.bottomLine.y : canvas.height;
+
+  // Ширина — вся ширина canvas
+  const leftX = 0;
+  const rightX = canvas.width;
+
+  const box = document.createElement('div');
+  box.className = 'highlight-box';
+  box.style.left = `${leftX}px`;
+  box.style.top = `${topLineY}px`;
+  box.style.width = `${rightX - leftX}px`;
+  box.style.height = `${bottomLineY - topLineY}px`;
+  document.getElementById('canvasContainer').appendChild(box);
+}
+    // function drawFloorHighlight(floor) {
+    //   // Удаляем старую рамку
+    //   const oldBox = document.querySelector('.highlight-box');
+    //   if (oldBox) oldBox.remove();
+
+    //   if (!floor || !floor.blocks || floor.blocks.length === 0) return;
+
+    //   // Находим границы этажа
+    //   const minY = Math.min(...floor.blocks.map(b => b.y));
+    //   const maxY = Math.max(...floor.blocks.map(b => b.y));
+    //   const minX = Math.min(...floor.blocks.map(b => b.x));
+    //   const maxX = Math.max(...floor.blocks.map(b => b.x));
+
+    //   const box = document.createElement('div');
+    //   box.className = 'highlight-box';
+    //   box.style.left = `${minX}px`;
+    //   box.style.top = `${minY}px`;
+    //   box.style.width = `${maxX - minX}px`;
+    //   box.style.height = `${maxY - minY}px`;
+    //   document.getElementById('canvasContainer').appendChild(box);
+    // }
+
+    // Навигация по этажам
+    document.getElementById('prevFloor').addEventListener('click', () => {
+      if (structuredRows.length > 0) {
+        currentFloorIndex--;
+        if (currentFloorIndex < 0) currentFloorIndex = structuredRows.length - 1;
+        updateFloorPanel();
+      }
+    });
+
+    document.getElementById('nextFloor').addEventListener('click', () => {
+      if (structuredRows.length > 0) {
+        currentFloorIndex++;
+        if (currentFloorIndex >= structuredRows.length) currentFloorIndex = 0;
+        updateFloorPanel();
+      }
+    });
+
+    // Инициализация панели при загрузке
+    document.addEventListener('DOMContentLoaded', () => {
+      updateFloorPanel();
+    });
+
+    // Копировать HTML в буфер
+document.getElementById('copyHtmlBtn').addEventListener('click', async () => {
+  const html = generateHtmlTable();
+  try {
+    await navigator.clipboard.writeText(html);
+    document.getElementById('status').textContent = 'HTML скопирован в буфер!';
+  } catch (err) {
+    document.getElementById('status').textContent = 'Ошибка копирования: ' + err.message;
+  }
+});
+
+// Показать HTML как рендер
+document.getElementById('showHtmlBtn').addEventListener('click', () => {
+  const html = generateHtmlTable();
+  document.getElementById('renderedHtmlTable').innerHTML = html;
+  document.getElementById('htmlOverlay').style.display = 'block';
+});
+
+// Закрыть оверлей
+document.getElementById('closeHtmlOverlay').addEventListener('click', () => {
+  document.getElementById('htmlOverlay').style.display = 'none';
+});
+  </script>
+</body>
+</html>
