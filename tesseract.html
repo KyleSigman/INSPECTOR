@@ -560,12 +560,35 @@ function groupBlocksIntoRows(blocks) {
         const dataColumns = detectColumns(dataRow.blocks);
 
         // Для каждой колонки — берём первый блок как метку
-        headerColumns.forEach((col, i) => {
-          const label = col[0] ? col[0].text : `Колонка ${i + 1}`;
-          const dataBlock = dataColumns[i] ? dataColumns[i][0] : null;
-          const dataText = dataBlock ? dataBlock.text : '—';
-          cardHtml += `<div><span style="color:#8e44ad; font-weight:bold;">${label}:</span> ${dataText}</div>`;
-        });
+        // Для каждой колонки — собираем ВСЕ блоки из данных
+headerColumns.forEach((headerCol, i) => {
+  const label = headerCol[0] ? headerCol[0].text : `Колонка ${i + 1}`;
+  
+  // Находим ВСЕ блоки данных в этой колонке
+  const allDataBlocks = [];
+  row.blocks.forEach(block => {
+    // Определяем, в какой колонке находится блок
+    const colIndex = headerColumns.findIndex(col => {
+      const firstBlock = col[0];
+      if (!firstBlock) return false;
+      // Используем X заголовка как центр колонки
+      const headerX = firstBlock.x;
+      return Math.abs(block.x - headerX) < 100; // допуск 100px
+    });
+    if (colIndex === i) {
+      allDataBlocks.push(block.text);
+    }
+  });
+
+  const dataText = allDataBlocks.length > 0 ? allDataBlocks.join(', ') : '—';
+  cardHtml += `<div><span style="color:#8e44ad; font-weight:bold;">${label}:</span> ${dataText}</div>`;
+});
+        // headerColumns.forEach((col, i) => {
+        //   const label = col[0] ? col[0].text : `Колонка ${i + 1}`;
+        //   const dataBlock = dataColumns[i] ? dataColumns[i][0] : null;
+        //   const dataText = dataBlock ? dataBlock.text : '—';
+        //   cardHtml += `<div><span style="color:#8e44ad; font-weight:bold;">${label}:</span> ${dataText}</div>`;
+        // });
       } else {
         // Без шапки — выводим все блоки строки
         row.blocks.forEach((block, i) => {
