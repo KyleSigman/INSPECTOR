@@ -253,6 +253,7 @@ h2
       <button id="regionModeBtn">Регион</button>
       <button id="exportRegionsBtn">Экспорт регионов</button>
       <button id="exportFullHtmlBtn">Полный клон</button>
+      <!-- <button id="exportTableJsonBtn">📊 Экспорт структуры таблицы (JSON)</button> -->
     </div>
 
 
@@ -1221,15 +1222,28 @@ document.getElementById('searchInput').oninput = () => {
   verticalBreaks = verticalLines.map(line => line.x).sort((a, b) => a - b);
 
   const columnBounds = [];
-  if (verticalBreaks.length === 0) {
-    columnBounds.push({ left: 0, right: viewport.width });
-  } else {
-    columnBounds.push({ left: 0, right: verticalBreaks[0] });
-    for (let i = 0; i < verticalBreaks.length - 1; i++) {
-      columnBounds.push({ left: verticalBreaks[i], right: verticalBreaks[i + 1] });
-    }
-    columnBounds.push({ left: verticalBreaks[verticalBreaks.length - 1], right: viewport.width });
+if (verticalBreaks.length === 0) {
+  columnBounds.push({ left: 0, right: viewport.width });
+} else if (verticalBreaks.length === 1) {
+  // Одна линия → не делаем таблицу
+  columnBounds.push({ left: 0, right: viewport.width });
+} else {
+  // Только ВНУТРЕННИЕ колонки между линиями
+  for (let i = 0; i < verticalBreaks.length - 1; i++) {
+    columnBounds.push({ left: verticalBreaks[i], right: verticalBreaks[i + 1] });
   }
+}
+
+  // const columnBounds = [];
+  // if (verticalBreaks.length === 0) {
+  //   columnBounds.push({ left: 0, right: viewport.width });
+  // } else {
+  //   columnBounds.push({ left: 0, right: verticalBreaks[0] });
+  //   for (let i = 0; i < verticalBreaks.length - 1; i++) {
+  //     columnBounds.push({ left: verticalBreaks[i], right: verticalBreaks[i + 1] });
+  //   }
+  //   columnBounds.push({ left: verticalBreaks[verticalBreaks.length - 1], right: viewport.width });
+  // }
 
   // 👇 СЮДА ВСТАВЛЯЕМ ЛОГИРОВАНИЕ 👇
 console.log('=== COLUMN BOUNDS ===');
@@ -2132,49 +2146,312 @@ exportRegionsBtn.addEventListener('click', async () => {
 });
   
 // === ПОЛНЫЙ КЛОН PDF → ТОЧНО КАК В РЕЖИМЕ ВЫДЕЛЕНИЯ, НО БЕЗ РАМКИ ===
+// document.getElementById('exportFullHtmlBtn').addEventListener('click', async () => {
+//   if (!currentTextContent || !viewport) {
+//     alert('Сначала загрузите PDF!');
+//     return;
+//   }
+
+//   let html = `<div style="position: relative; width: ${viewport.width}px; height: ${viewport.height}px; background: white;">\n`;
+
+//   currentTextContent.items.forEach(item => {
+//     if (!item.str.trim()) return;
+//     const [,, , , x, y] = item.transform;
+//     const pt = viewport.convertToViewportPoint(x, y);
+//     const tx = pt[0];
+//     const ty = pt[1];
+    
+//     // Экранируем текст
+//     const safeText = item.str.trim()
+//       .replace(/&/g, '&amp;')
+//       .replace(/</g, '<')
+//       .replace(/>/g, '>');
+    
+//     html += `<div style="position: absolute; left: ${tx}px; top: ${ty}px; white-space: nowrap;">${safeText}</div>\n`;
+//   });
+
+//   html += `</div>`;
+
+//   try {
+//     await navigator.clipboard.writeText(html);
+//     document.getElementById('status').textContent = '✅ Полный клон PDF скопирован в буфер!';
+//   } catch (err) {
+//     console.error(err);
+//     // Альтернатива: скачать файл, если буфер не работает
+//     const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+//     const url = URL.createObjectURL(blob);
+//     const a = document.createElement('a');
+//     a.href = url;
+//     a.download = 'pdf-full-clone.html';
+//     a.click();
+//     URL.revokeObjectURL(url);
+//     document.getElementById('status').textContent = '✅ Сохранено как файл (буфер недоступен)';
+//   }
+// });
+  
+// document.getElementById('exportFullHtmlBtn').addEventListener('click', async () => {
+//   if (!currentTextContent || !viewport || !window.columnBounds || horizontalLines.length === 0) {
+//     alert('Сначала выполните анализ!');
+//     return;
+//   }
+
+//   // === 1. Границы строк (этажей) ===
+//   const sortedLines = [...horizontalLines].sort((a, b) => a.y - b.y);
+//   const rowBounds = [];
+//   for (let i = 0; i < sortedLines.length; i++) {
+//     const top = i === 0 ? 0 : sortedLines[i - 1].y;
+//     const bottom = sortedLines[i].y;
+//     rowBounds.push({ top, bottom });
+//   }
+
+//   // === 2. Все текстовые блоки ===
+//   const allBlocks = currentTextContent.items
+//     .filter(item => item.str.trim())
+//     .map(item => {
+//       const [,, , , x, y] = item.transform;
+//       const pt = viewport.convertToViewportPoint(x, y);
+//       return { text: item.str.trim(), x: pt[0], y: pt[1] };
+//     });
+
+//   // === 3. Создаём ячейки и распределяем блоки ===
+//   const cells = [];
+//   rowBounds.forEach((rowBound, rowIndex) => {
+//     window.columnBounds.forEach((colBound, colIndex) => {
+//       const blocksInCell = allBlocks.filter(b =>
+//         b.x >= colBound.left && b.x < colBound.right &&
+//         b.y >= rowBound.top && b.y < rowBound.bottom
+//       ).sort((a, b) => a.y - b.y); // сортируем по Y
+
+//       cells.push({
+//         id: `cell_r${rowIndex}_c${colIndex}`,
+//         floorIndex: rowIndex,
+//         colIndex: colIndex,
+//         left: colBound.left,
+//         right: colBound.right,
+//         top: rowBound.top,
+//         bottom: rowBound.bottom,
+//         blocks: blocksInCell
+//       });
+//     });
+//   });
+
+//   // === 4. Рисуем ячейки на canvas (визуальная проверка) ===
+//   await currentPage.render({ canvasContext: ctx, viewport }).promise;
+//   cells.forEach(cell => {
+//     ctx.strokeStyle = 'rgba(0, 150, 255, 0.5)';
+//     ctx.lineWidth = 1;
+//     ctx.strokeRect(cell.left, cell.top, cell.right - cell.left, cell.bottom - cell.top);
+//   });
+
+//   // === 5. Генерируем HTML-таблицу ===
+//   let html = `<table class="pdf-structured" style="
+//     border-collapse: collapse;
+//     width: 100%;
+//     font-family: Arial, sans-serif;
+//     margin: 20px 0;
+//   ">`;
+
+//   rowBounds.forEach((_, rowIndex) => {
+//     html += `<tr data-floor="${rowIndex}">`;
+//     window.columnBounds.forEach((_, colIndex) => {
+//       const cell = cells.find(c => c.floorIndex === rowIndex && c.colIndex === colIndex);
+//       const content = cell.blocks.map(b => 
+//         `<div class="cell-line">${b.text.replace(/&/g, '&amp;').replace(/</g, '<').replace(/>/g, '>')}</div>`
+//       ).join('');
+//       html += `<td id="${cell.id}" data-floor="${rowIndex}" data-col="${colIndex}" style="
+//         border: 1px solid #ddd;
+//         background: rgba(230, 245, 255, 0.4);
+//         padding: 6px;
+//         vertical-align: top;
+//         min-width: 80px;
+//       ">${content}</td>`;
+//     });
+//     html += `</tr>`;
+//   });
+//   html += `</table>`;
+
+//   // === 6. Копируем в буфер ===
+//   try {
+//     await navigator.clipboard.writeText(html);
+//     document.getElementById('status').textContent = '✅ Структурированная таблица скопирована!';
+//   } catch (err) {
+//     const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+//     const url = URL.createObjectURL(blob);
+//     const a = document.createElement('a');
+//     a.href = url;
+//     a.download = 'structured-table.html';
+//     a.click();
+//     URL.revokeObjectURL(url);
+//     document.getElementById('status').textContent = '✅ Сохранено как structured-table.html';
+//   }
+// });
 document.getElementById('exportFullHtmlBtn').addEventListener('click', async () => {
-  if (!currentTextContent || !viewport) {
-    alert('Сначала загрузите PDF!');
+  if (!currentTextContent || !viewport || !window.columnBounds) {
+    alert('Сначала загрузите PDF и выполните анализ!');
     return;
   }
 
-  let html = `<div style="position: relative; width: ${viewport.width}px; height: ${viewport.height}px; background: white;">\n`;
+  // === 1. Получаем все текстовые блоки с координатами ===
+  const allBlocks = currentTextContent.items
+    .filter(item => item.str.trim())
+    .map(item => {
+      const [,, , , x, y] = item.transform;
+      const pt = viewport.convertToViewportPoint(x, y);
+      return { 
+        text: item.str.trim(), 
+        x: pt[0], 
+        y: pt[1] 
+      };
+    });
 
-  currentTextContent.items.forEach(item => {
-    if (!item.str.trim()) return;
-    const [,, , , x, y] = item.transform;
-    const pt = viewport.convertToViewportPoint(x, y);
-    const tx = pt[0];
-    const ty = pt[1];
-    
-    // Экранируем текст
-    const safeText = item.str.trim()
+  // === 2. Определяем границы таблицы (между первой и последней зелёной линией) ===
+  let tableTop = 0;
+  let tableBottom = canvas.height;
+
+  if (horizontalLines.length > 0) {
+    const sortedLines = [...horizontalLines].sort((a, b) => a.y - b.y);
+    tableTop = sortedLines[0].y;          // первая зелёная линия — верх таблицы
+    tableBottom = sortedLines.at(-1).y;   // последняя зелёная линия — низ таблицы
+  }
+
+  // === 3. Разделяем блоки ===
+  const outsideBlocks = allBlocks.filter(b => b.y < tableTop || b.y > tableBottom);
+  const insideBlocks = allBlocks.filter(b => b.y >= tableTop && b.y <= tableBottom);
+
+  // === 4. Генерируем HTML ===
+  let html = `<div style="position: relative; width: ${viewport.width}px; height: ${viewport.height}px; background: white; font-family: Arial, sans-serif;">\n`;
+
+  // --- ВНЕТАБЛИЧНЫЕ БЛОКИ: как в сыром клоне ---
+  outsideBlocks.forEach(block => {
+    const safeText = block.text
       .replace(/&/g, '&amp;')
       .replace(/</g, '<')
       .replace(/>/g, '>');
-    
-    html += `<div style="position: absolute; left: ${tx}px; top: ${ty}px; white-space: nowrap;">${safeText}</div>\n`;
+    html += `  <div style="position: absolute; left: ${block.x}px; top: ${block.y}px; white-space: nowrap; border: 1px solid #ccc; padding: 2px 4px;">${safeText}</div>\n`;
   });
+
+  // --- ВНУТРИТАБЛИЧНЫЕ БЛОКИ: строим таблицу ---
+  if (insideBlocks.length > 0 && horizontalLines.length > 0) {
+    // Границы строк
+    const sortedLines = [...horizontalLines].sort((a, b) => a.y - b.y);
+    const rowBounds = [];
+    for (let i = 0; i < sortedLines.length; i++) {
+      const top = i === 0 ? tableTop : sortedLines[i - 1].y;
+      const bottom = sortedLines[i].y;
+      rowBounds.push({ top, bottom });
+    }
+
+    // Создаём ячейки и распределяем блоки
+    const cells = [];
+    rowBounds.forEach((rowBound, rowIndex) => {
+      window.columnBounds.forEach((colBound, colIndex) => {
+        const blocksInCell = insideBlocks.filter(b =>
+          b.x >= colBound.left && b.x < colBound.right &&
+          b.y >= rowBound.top && b.y < rowBound.bottom
+        ).sort((a, b) => a.y - b.y);
+
+        cells.push({
+          id: `cell_r${rowIndex}_c${colIndex}`,
+          floorIndex: rowIndex,
+          colIndex: colIndex,
+          left: colBound.left,
+          top: rowBound.top,
+          blocks: blocksInCell
+        });
+      });
+    });
+
+    // Рисуем таблицу
+    html += `  <table style="position: absolute; left: 0; top: ${tableTop}px; border-collapse: collapse; width: ${viewport.width}px;">\n`;
+    rowBounds.forEach((_, rowIndex) => {
+      html += `    <tr>\n`;
+      window.columnBounds.forEach((_, colIndex) => {
+        const cell = cells.find(c => c.floorIndex === rowIndex && c.colIndex === colIndex);
+        const content = cell.blocks.map(b => 
+          `<div style="margin: 1px 0; line-height: 1.3;">${b.text.replace(/&/g, '&amp;').replace(/</g, '<').replace(/>/g, '>')}</div>`
+        ).join('');
+        html += `      <td id="${cell.id}" data-floor="${rowIndex}" data-col="${colIndex}" 
+        style="border: 1px solid #ddd; background: rgba(230, 245, 255, 0.4); padding: 6px; vertical-align: top; min-width: 80px;">
+          ${content}
+        </td>\n`;
+      });
+      html += `    </tr>\n`;
+    });
+    html += `  </table>\n`;
+  }
 
   html += `</div>`;
 
+// === ПРЕВЬЮ СТРУКТУРЫ ТАБЛИЦЫ (ячейки) ===
+if (window.columnBounds && horizontalLines.length > 0) {
+  const sortedLines = [...horizontalLines].sort((a, b) => a.y - b.y);
+  const rowCount = sortedLines.length;
+  const colCount = window.columnBounds.length;
+  const totalCells = rowCount * colCount;
+
+  // Создаём оверлей
+  const previewOverlay = document.createElement('div');
+  previewOverlay.style.cssText = `
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    color: white;
+    font-family: monospace;
+    pointer-events: none;
+  `;
+  previewOverlay.innerHTML = `<div style="margin-bottom: 20px; font-size: 20px;">Ячеек: ${totalCells} (${rowCount} × ${colCount})</div>`;
+
+  // Мини-таблица
+  const miniTable = document.createElement('div');
+  miniTable.style.cssText = `
+    display: grid;
+    grid-template-rows: repeat(${rowCount}, 12px);
+    grid-template-columns: repeat(${colCount}, 12px);
+    gap: 2px;
+    width: fit-content;
+  `;
+  for (let i = 0; i < totalCells; i++) {
+    const cell = document.createElement('div');
+    cell.style.cssText = `
+      width: 12px;
+      height: 12px;
+      background: #3498db;
+      border-radius: 2px;
+    `;
+    miniTable.appendChild(cell);
+  }
+  previewOverlay.appendChild(miniTable);
+  document.body.appendChild(previewOverlay);
+
+  // Убрать через 3 секунды
+  setTimeout(() => {
+    if (previewOverlay.parentNode) {
+      previewOverlay.parentNode.removeChild(previewOverlay);
+    }
+  }, 3000);
+}
+
+  // === 5. Копируем в буфер ===
   try {
     await navigator.clipboard.writeText(html);
-    document.getElementById('status').textContent = '✅ Полный клон PDF скопирован в буфер!';
+    document.getElementById('status').textContent = '✅ Гибридный клон скопирован!';
   } catch (err) {
-    console.error(err);
-    // Альтернатива: скачать файл, если буфер не работает
     const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'pdf-full-clone.html';
+    a.download = 'structured-clone.html';
     a.click();
     URL.revokeObjectURL(url);
-    document.getElementById('status').textContent = '✅ Сохранено как файл (буфер недоступен)';
+    document.getElementById('status').textContent = '✅ Сохранено как structured-clone.html';
   }
-});
-  
+}); 
 
 // === СОХРАНЕНИЕ КАРТОЧКИ КАК HTML (как в твоём референсе) ===
 window.saveCardAsHtml = async function(cardId) {
