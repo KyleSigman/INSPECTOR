@@ -300,6 +300,84 @@ h2
     </div>
   </div>
 
+  <!-- Шестерёнка для открытия панели -->
+<div id="smartCellToggle" style="
+position: fixed; top: 10px; right: 10px; 
+width: 32px; height: 32px; 
+background: #3498db; color: white; 
+border-radius: 50%; 
+display: flex; align-items: center; justify-content: center;
+cursor: pointer; z-index: 2001;
+box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+font-size: 18px; z-index: 9999;
+">⚙️</div>
+
+<!-- Панель умной клетки (изначально скрыта) -->
+<div id="smartCellPanel" style="
+position: fixed; top: 10px; left: 5%; right: 5%; 
+background: white; padding: 16px; border-radius: 12px; 
+box-shadow: 0 4px 20px rgba(0,0,0,0.25); 
+z-index: 2000; font-size: 14px;
+display: none; /* скрыта по умолчанию */
+">
+<label>Умная клетка:</label>
+<select id="smartCellSelect" style="width: 100%; margin-top: 6px; padding: 6px; font-size: 14px;"></select>
+
+<!-- Кнопки в два столбца: Лево/Право слева, Вверх/Вниз справа -->
+<div style="margin-top: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+  <!-- Левый столбец: ← → -->
+  <div style="display: flex; flex-direction: column; gap: 6px;">
+    <button id="smartLeft" style="height: 40px;">←</button>
+    <button id="smartRight" style="height: 40px;">→</button>
+  </div>
+  <!-- Правый столбец: ↑ ↓ -->
+  <div style="display: flex; flex-direction: column; gap: 6px;">
+    <button id="smartUp" style="height: 40px;">↑</button>
+    <button id="smartDown" style="height: 40px;">↓</button>
+  </div>
+</div>
+
+<div id="smartOutput" style="margin-top: 16px; min-height: 50px; background: #f9f9f9; padding: 8px; border-radius: 6px;"></div>
+</div>
+
+<script>
+// Переключение видимости панели
+document.getElementById('smartCellToggle').addEventListener('click', (e) => {
+  e.stopPropagation();
+  const panel = document.getElementById('smartCellPanel');
+  if (panel.style.display === 'block') {
+    panel.style.display = 'none';
+  } else {
+    panel.style.display = 'block';
+  }
+});
+
+// Скрыть панель при клике вне её
+document.addEventListener('click', (e) => {
+  const panel = document.getElementById('smartCellPanel');
+  const toggle = document.getElementById('smartCellToggle');
+  if (panel.style.display === 'block' && !panel.contains(e.target) && e.target !== toggle) {
+    panel.style.display = 'none';
+  }
+});
+</script>
+  <!-- <div id="smartCellPanel" style="
+  position: fixed; top: 10px; right: 10px; 
+  background: white; padding: 12px; border-radius: 8px; 
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2); z-index: 2000;
+  font-size: 13px;
+">
+  <label>Умная клетка:</label>
+  <select id="smartCellSelect" style="width: 120px; margin-top: 4px;"></select>
+  <div style="margin-top: 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+    <button id="smartUp" style="grid-column: 2;">↑</button>
+    <button id="smartLeft">←</button>
+    <button id="smartRight">→</button>
+    <button id="smartDown" style="grid-column: 2;">↓</button>
+  </div>
+  <div id="smartOutput" style="margin-top: 12px; min-height: 40px;"></div>
+</div> -->
+
   <script>
     // Настройка PDF.js
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -314,7 +392,8 @@ h2
     let horizontalLines = [];
     let verticalBreaks = []; // ← добавь эту строку
     let currentFloorIndex = -1;
-
+    let currentSmartCellId = null;
+    
     function mergeNearbyHorizontalLines(lines) {
   if (lines.length <= 1) return lines;
   
@@ -344,7 +423,7 @@ h2
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       const data = imageData.data;
       const threshold = 128;
-      const minLineLength = 80;
+      const minLineLength = 50;
       const lines = [];
 
       for (let y = 0; y < canvas.height; y++) {
@@ -411,95 +490,9 @@ h2
     return filteredLines;
   }
 
-//     function detectVerticalLines() {
-//   if (!ctx || !canvas) return [];
 
-//   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-//   const data = imageData.data;
-//   const threshold = 128;
-//   const minLineHeight = 30; // минимальная высота вертикальной линии
-//   const lines = [];
-
-//   for (let x = 0; x < canvas.width; x++) {
-//     let startY = -1;
-//     for (let y = 0; y <= canvas.height; y++) {
-//       if (y < canvas.height) {
-//         const i = (y * canvas.width + x) * 4;
-//         const brightness = (data[i] + data[i+1] + data[i+2]) / 3;
-//         if (brightness <= threshold) {
-//           if (startY === -1) startY = y;
-//         } else {
-//           if (startY !== -1 && (y - startY) >= minLineHeight) {
-//             lines.push({ x, startY, endY: y - 1 });
-//           }
-//           startY = -1;
-//         }
-//       } else {
-//         if (startY !== -1 && (y - startY) >= minLineHeight) {
-//           lines.push({ x, startY, endY: y - 1 });
-//         }
-//       }
-//     }
-//   }
-
-//   // Убираем дубликаты (линии толщиной >1px)
-//   const filteredLines = [];
-//   let lastX = -100;
-//   for (const line of lines) {
-//     if (line.x - lastX > 2) { // допуск 2px
-//       filteredLines.push(line);
-//       lastX = line.x;
-//     }
-//   }
-
-//   return filteredLines;
-// }
-
-//     function detectVerticalLines() {
-//   if (!currentTextContent || !viewport) return [];
-
-//   const blocks = currentTextContent.items
-//     .filter(item => item.str.trim())
-//     .map(item => {
-//       const [a, b, c, d, x, y] = item.transform;
-//       const pt = viewport.convertToViewportPoint(x, y);
-//       // Вычисляем высоту блока (приблизительно)
-//       const height = Math.sqrt(c * c + d * d) * 12; // 12px — базовый размер шрифта
-//       return { 
-//         text: item.str.trim(), 
-//         x: pt[0], 
-//         y: pt[1], 
-//         height: height,
-//         transform: item.transform
-//       };
-//     });
-
-//   // Средняя высота строк
-//   const avgHeight = blocks.reduce((sum, b) => sum + b.height, 0) / blocks.length;
-
-//   // Порог: если высота > 2x средней — это линия
-//   const LINE_THRESHOLD = avgHeight * 2;
-
-//   const verticalLines = [];
-
-//   blocks.forEach(block => {
-//     if (block.height > LINE_THRESHOLD) {
-//       verticalLines.push({
-//         x: block.x,
-//         y: block.y,
-//         height: block.height,
-//         label: 'break'
-//       });
-//     }
-//   });
-
-//   return verticalLines;
-// }
-    
 // === ФУНКЦИЯ: Группировка блоков по "этажам" между линиями ===
    
-
-
 function groupBlocksIntoRows(blocks) {
       if (horizontalLines.length === 0) {
         const TOLERANCE = 5;
@@ -685,449 +678,6 @@ document.getElementById('searchInput').oninput = () => {
     resultDiv.innerHTML = '<div style="color:#d9534f">Не найдено</div>';
   }
 };
-      //   document.getElementById('searchInput').oninput = () => {
-      //     const query = document.getElementById('searchInput').value;
-      //     const exactMatch = document.getElementById('exactMatch').checked;
-      //     const headerIndex = parseInt(document.getElementById('headerFloorSelect').value);
-      //     const resultDiv = document.getElementById('searchResult');
-
-      //     if (!query) {
-      //       resultDiv.innerHTML = '';
-      //       return;
-      //     }
-
-      //     const foundRows = findRowByQuery(query, exactMatch);
-      //     if (foundRows.length > 0) {
-      //       resultDiv.innerHTML = '';
-      //       foundRows.forEach((row, idx) => {
-      //         const uniqueId = `card_${Date.now()}_${idx}`;
-      //         let cardHtml = `<div id="${uniqueId}" class="match-card"><strong>Найдено (строка ${structuredRows.indexOf(row)}):</strong><br>`;
-      //         // let cardHtml = `<div class="match-card"><strong>Найдено (строка ${structuredRows.indexOf(row)}):</strong><br>`;
-
-      //         if (headerIndex >= 0 && headerIndex < structuredRows.length && window.columnBounds) {
-      //           const headerRow = structuredRows[headerIndex];
-      //           const columnBounds = window.columnBounds;
-
-      //           // 👇 ДОБАВЬ ЭТО:
-      //           console.log('=== ЗАГОЛОВКИ ПО КОЛОНКАМ ===');
-      //           columnBounds.forEach((col, i) => {
-      //             const headerInCol = headerRow.blocks.find(b => b.x >= col.left && b.x < col.right);
-      //             console.log(`Колонка ${i + 1} [${col.left.toFixed(1)}–${col.right.toFixed(1)}]:`, headerInCol ? `"${headerInCol.text}"` : '—');
-      //           });
-
-      //           console.log('=== ДАННЫЕ ПО КОЛОНКАМ (строка 2) ===');
-      //           const testRow = structuredRows[2]; // или row из foundRows
-      //           columnBounds.forEach((col, i) => {
-      //             const dataInCol = testRow.blocks.filter(b => b.x >= col.left && b.x < col.right);
-      //             console.log(`Колонка ${i + 1}:`, dataInCol.map(b => `"${b.text}"`));
-      //           });
-
-      //           columnBounds.forEach(col => {
-      //             const headerInCol = headerRow.blocks.find(b => b.x >= col.left && b.x < col.right);
-      //             if (!headerInCol) return;
-
-      //             const dataInCol = row.blocks
-      //               .filter(b => b.x >= col.left && b.x < col.right)
-      //               .map(b => b.text);
-      //             const dataText = dataInCol.length ? dataInCol.join(', ') : '—';
-      //             cardHtml += `<div><span style="color:#8e44ad; font-weight:bold;">${headerInCol.text}:</span> ${dataText}</div>`;
-      //           });
-      //         } else {
-      //           row.blocks.forEach(block => {
-      //             cardHtml += `<div>${block.text}</div>`;
-      //           });
-      //         }
-
-      //         // const uniqueId = `card_${Date.now()}_${idx}`;
-      //         cardHtml += `
-      //   <div style="margin-top:10px; display:flex; gap:8px;">
-      //     <button onclick="saveCardAsHtml('${uniqueId}')">💾 HTML</button>
-      //     <button onclick="saveCardForTelegram('${uniqueId}')">📱 TG</button>
-      //   </div>
-      // `;
-      //         cardHtml += '</div>';
-      //         resultDiv.innerHTML += cardHtml;
-      //       });
-      //     } else {
-      //       resultDiv.innerHTML = '<div style="color:#d9534f">Не найдено</div>';
-      //     }
-      //   };
-
-        //         document.getElementById('searchInput').oninput = () => {
-        //   const query = document.getElementById('searchInput').value;
-        //   const exactMatch = document.getElementById('exactMatch').checked;
-        //   const headerIndex = parseInt(document.getElementById('headerFloorSelect').value);
-        //   const resultDiv = document.getElementById('searchResult');
-
-        //   if (!query) {
-        //     resultDiv.innerHTML = '';
-        //     return;
-        //   }
-
-        //   const foundRows = findRowByQuery(query, exactMatch);
-        //   if (foundRows.length > 0) {
-        //     resultDiv.innerHTML = '';
-        //     foundRows.forEach((row, idx) => {
-        //       let cardHtml = `<div class="match-card"><strong>Найдено (строка ${structuredRows.indexOf(row)}):</strong><br>`;
-
-        //       if (headerIndex >= 0 && headerIndex < structuredRows.length && window.columnBounds) {
-        //         const headerRow = structuredRows[headerIndex];
-        //         const columnBounds = window.columnBounds;
-
-        //         columnBounds.forEach(col => {
-        //           const headerInCol = headerRow.blocks.find(b => b.x >= col.left && b.x < col.right);
-        //           if (!headerInCol) return;
-
-        //           const dataInCol = row.blocks
-        //             .filter(b => b.x >= col.left && b.x < col.right)
-        //             .map(b => b.text);
-        //           const dataText = dataInCol.length ? dataInCol.join(', ') : '—';
-        //           cardHtml += `<div><span style="color:#8e44ad; font-weight:bold;">${headerInCol.text}:</span> ${dataText}</div>`;
-        //         });
-        //       } else {
-        //         row.blocks.forEach(block => {
-        //           cardHtml += `<div>${block.text}</div>`;
-        //         });
-        //       }
-
-        //       // Кнопки
-        //       const uniqueId = `btns_${Date.now()}_${idx}`;
-        //       cardHtml += `
-        //         <div style="margin-top:10px; display:flex; gap:8px;">
-        //           <button onclick="saveAsHtml('${uniqueId}')">💾 Сохранить HTML</button>
-        //           <button onclick="saveForTelegram('${uniqueId}')">📱 Telegram</button>
-        //         </div>
-        //       `;
-        //       cardHtml += '</div>';
-        //       resultDiv.innerHTML += cardHtml;
-        //     });
-        //   } else {
-        //     resultDiv.innerHTML = '<div style="color:#d9534f">Не найдено</div>';
-        //   }
-        // };
-
-        //         document.getElementById('searchInput').oninput = () => {
-        //   const query = document.getElementById('searchInput').value;
-        //   const exactMatch = document.getElementById('exactMatch').checked;
-        //   const headerIndex = parseInt(document.getElementById('headerFloorSelect').value);
-        //   const resultDiv = document.getElementById('searchResult');
-
-        //   if (!query) {
-        //     resultDiv.innerHTML = '';
-        //     return;
-        //   }
-
-        //   const foundRows = findRowByQuery(query, exactMatch);
-        //   if (foundRows.length > 0) {
-        //     resultDiv.innerHTML = '';
-        //     foundRows.forEach((row, idx) => {
-        //       let cardHtml = `<div class="match-card"><strong>Найдено (строка ${structuredRows.indexOf(row)}):</strong><br>`;
-
-        //       if (headerIndex >= 0 && headerIndex < structuredRows.length && window.columnBounds) {
-        //         const headerRow = structuredRows[headerIndex];
-        //         const columnBounds = window.columnBounds;
-
-        //         // Для каждой колонки — находим заголовок и данные
-        //         columnBounds.forEach(col => {
-        //   const headerInCol = headerRow.blocks.find(b => b.x >= col.left && b.x < col.right);
-        //   // Пропускаем колонки без заголовка
-        //   if (!headerInCol) return;
-
-        //   const dataInCol = row.blocks
-        //     .filter(b => b.x >= col.left && b.x < col.right)
-        //     .map(b => b.text);
-
-        //   const dataText = dataInCol.length ? dataInCol.join(', ') : '—';
-        //   cardHtml += `<div><span style="color:#8e44ad; font-weight:bold;">${headerInCol.text}:</span> ${dataText}</div>`;
-        // });
-        //         // columnBounds.forEach((col, i) => {
-        //         //   // Заголовок в этой колонке
-        //         //   const headerInCol = headerRow.blocks.find(b => b.x >= col.left && b.x < col.right);
-        //         //   // Все данные в этой колонке
-        //         //   const dataInCol = row.blocks
-        //         //     .filter(b => b.x >= col.left && b.x < col.right)
-        //         //     .map(b => b.text);
-
-        //         //   const label = headerInCol ? headerInCol.text : `Колонка ${i + 1}`;
-        //         //   const dataText = dataInCol.length ? dataInCol.join(', ') : '—';
-        //         //   cardHtml += `<div><span style="color:#8e44ad; font-weight:bold;">${label}:</span> ${dataText}</div>`;
-        //         // });
-        //       } else {
-        //         row.blocks.forEach(block => {
-        //           cardHtml += `<div>${block.text}</div>`;
-        //         });
-        //       }
-
-        //       cardHtml += '</div>';
-        //       resultDiv.innerHTML += cardHtml;
-        //     });
-        //   } else {
-        //     resultDiv.innerHTML = '<div style="color:#d9534f">Не найдено</div>';
-        //   }
-        // };
-
-
-        //         document.getElementById('searchInput').oninput = () => {
-        //   const query = document.getElementById('searchInput').value;
-        //   const exactMatch = document.getElementById('exactMatch').checked;
-        //   const headerIndex = parseInt(document.getElementById('headerFloorSelect').value);
-        //   const resultDiv = document.getElementById('searchResult');
-
-        //   if (!query) {
-        //     resultDiv.innerHTML = '';
-        //     return;
-        //   }
-
-        //   const foundRows = findRowByQuery(query, exactMatch);
-        //   if (foundRows.length > 0) {
-        //     resultDiv.innerHTML = '';
-        //     foundRows.forEach((row, idx) => {
-        //       let cardHtml = `<div class="match-card"><strong>Найдено (строка ${structuredRows.indexOf(row)}):</strong><br>`;
-
-        //       if (headerIndex >= 0 && headerIndex < structuredRows.length) {
-        //         const headerRow = structuredRows[headerIndex];
-        //         const dataRow = row;
-
-        //         // Группируем в колонки
-        //         const headerColumns = detectColumns(headerRow.blocks);
-        //         const dataColumns = detectColumns(dataRow.blocks);
-
-        //         // Для каждой колонки — берём первый блок как метку
-        //         // Для каждой колонки — собираем ВСЕ блоки из данных
-        // headerColumns.forEach((headerCol, i) => {
-        //   const label = headerCol[0] ? headerCol[0].text : `Колонка ${i + 1}`;
-
-        //   // Находим ВСЕ блоки данных в этой колонке
-        //   const allDataBlocks = [];
-        //   row.blocks.forEach(block => {
-        //     // Определяем, в какой колонке находится блок
-        //     const colIndex = headerColumns.findIndex(col => {
-        //       const firstBlock = col[0];
-        //       if (!firstBlock) return false;
-        //       // Используем X заголовка как центр колонки
-        //       const headerX = firstBlock.x;
-        //       return Math.abs(block.x - headerX) < 100; // допуск 100px
-        //     });
-        //     if (colIndex === i) {
-        //       allDataBlocks.push(block.text);
-        //     }
-        //   });
-
-        //   const dataText = allDataBlocks.length > 0 ? allDataBlocks.join(', ') : '—';
-        //   cardHtml += `<div><span style="color:#8e44ad; font-weight:bold;">${label}:</span> ${dataText}</div>`;
-        // });
-        //         // headerColumns.forEach((col, i) => {
-        //         //   const label = col[0] ? col[0].text : `Колонка ${i + 1}`;
-        //         //   const dataBlock = dataColumns[i] ? dataColumns[i][0] : null;
-        //         //   const dataText = dataBlock ? dataBlock.text : '—';
-        //         //   cardHtml += `<div><span style="color:#8e44ad; font-weight:bold;">${label}:</span> ${dataText}</div>`;
-        //         // });
-        //       } else {
-        //         // Без шапки — выводим все блоки строки
-        //         row.blocks.forEach((block, i) => {
-        //   cardHtml += `<div>[${i}] X:${block.x.toFixed(0)} Y:${block.y.toFixed(0)} → ${block.text}</div>`;
-        // });
-        //         // row.blocks.forEach(block => {
-        //         //   cardHtml += `<div>${block.text}</div>`;
-        //         // });
-        //       }
-
-        //       cardHtml += '</div>';
-        //       resultDiv.innerHTML += cardHtml;
-        //     });
-        //   } else {
-        //     resultDiv.innerHTML = '<div style="color:#d9534f">Не найдено</div>';
-        //   }
-        // };
-
-
-        //         document.getElementById('searchInput').oninput = () => {
-        //   const query = document.getElementById('searchInput').value;
-        //   const exactMatch = document.getElementById('exactMatch').checked;
-        //   const headerIndex = parseInt(document.getElementById('headerFloorSelect').value);
-        //   const resultDiv = document.getElementById('searchResult');
-
-        //   if (!query) {
-        //     resultDiv.innerHTML = '';
-        //     return;
-        //   }
-
-        //   const foundRows = findRowByQuery(query, exactMatch);
-        //   if (foundRows.length > 0) {
-        //     resultDiv.innerHTML = '';
-        //     foundRows.forEach((row, idx) => {
-        //       let cardHtml = `<div class="match-card"><strong>Найдено (строка ${structuredRows.indexOf(row)}):</strong><br>`;
-
-        //       if (headerIndex >= 0 && headerIndex < structuredRows.length) {
-        //         const headerRow = structuredRows[headerIndex];
-        //         const dataRow = row;
-
-        //         // Сортируем по X
-        //         const sortedHeader = [...headerRow.blocks].sort((a, b) => a.x - b.x);
-        //         const sortedData = [...dataRow.blocks].sort((a, b) => a.x - b.x);
-
-        //         // Если есть вертикальные линии — определяем колонки
-        //         if (verticalBreaks.length > 0) {
-        //           // Добавляем границы: начало и конец страницы
-        //           const allBreaks = [0, ...verticalBreaks, viewport.width];
-        //           allBreaks.sort((a, b) => a - b);
-
-        //           // Для каждой колонки — берём заголовок и данные
-        //           for (let i = 0; i < allBreaks.length - 1; i++) {
-        //             const left = allBreaks[i];
-        //             const right = allBreaks[i + 1];
-
-        //             // Ищем заголовок в этой колонке
-        //             const headerInCol = sortedHeader.find(b => b.x >= left && b.x < right);
-        //             const dataInCol = sortedData.find(b => b.x >= left && b.x < right);
-
-        //             const label = headerInCol ? headerInCol.text : `Колонка ${i + 1}`;
-        //             const dataText = dataInCol ? dataInCol.text : '—';
-        //             cardHtml += `<div><span style="color:#8e44ad; font-weight:bold;">${label}:</span> ${dataText}</div>`;
-        //           }
-        //         } else {
-        //           // Без вертикальных линий — как раньше
-        //           sortedHeader.forEach((headerBlock, i) => {
-        //             const dataBlock = sortedData[i];
-        //             const dataText = dataBlock ? dataBlock.text : '—';
-        //             cardHtml += `<div><span style="color:#8e44ad; font-weight:bold;">${headerBlock.text}:</span> ${dataText}</div>`;
-        //           });
-        //         }
-        //       } else {
-        //         row.blocks.forEach(block => {
-        //           cardHtml += `<div>${block.text}</div>`;
-        //         });
-        //       }
-
-        //       cardHtml += '</div>';
-        //       resultDiv.innerHTML += cardHtml;
-        //     });
-        //   } else {
-        //     resultDiv.innerHTML = '<div style="color:#d9534f">Не найдено</div>';
-        //   }
-        // };
-
-        //         document.getElementById('searchInput').oninput = () => {
-        //   const query = document.getElementById('searchInput').value;
-        //   const exactMatch = document.getElementById('exactMatch').checked;
-        //   const headerIndex = parseInt(document.getElementById('headerFloorSelect').value);
-        //   const resultDiv = document.getElementById('searchResult');
-
-        //   if (!query) {
-        //     resultDiv.innerHTML = '';
-        //     return;
-        //   }
-
-        //   const foundRows = findRowByQuery(query, exactMatch);
-        //   if (foundRows.length > 0) {
-        //     resultDiv.innerHTML = '';
-        //     foundRows.forEach((row, idx) => {
-        //       let cardHtml = `<div class="match-card"><strong>Найдено (строка ${structuredRows.indexOf(row)}):</strong><br>`;
-
-        //       if (headerIndex >= 0 && headerIndex < structuredRows.length) {
-        //         const headerRow = structuredRows[headerIndex];
-        //         const dataRow = row;
-
-        //         // ГРУППИРУЕМ В КОЛОНКИ
-        //         const headerColumns = detectColumns(headerRow.blocks);
-        //         const dataColumns = detectColumns(dataRow.blocks);
-
-        //         // Для каждой колонки — берём первый блок как метку
-        //         // Выводим ВСЕ колонки из шапки
-        // headerColumns.forEach((col, i) => {
-        //   const label = col[0] ? col[0].text : `Колонка ${i + 1}`;
-        //   const dataBlock = dataColumns[i] ? dataColumns[i][0] : null;
-        //   const dataText = dataBlock ? dataBlock.text : '—';
-        //   cardHtml += `<div><span style="color:#8e44ad; font-weight:bold;">${label}:</span> ${dataText}</div>`;
-        // });
-        //         // headerColumns.forEach((col, i) => {
-        //         //   const label = col[0] ? col[0].text : `Колонка ${i + 1}`;
-        //         //   const dataBlock = dataColumns[i] ? dataColumns[i][0] : null;
-        //         //   if (dataBlock) {
-        //         //     cardHtml += `<div><span style="color:#8e44ad; font-weight:bold;">${label}:</span> ${dataBlock.text}</div>`;
-        //         //   }
-        //         // });
-        //       } else {
-        //         row.blocks.forEach(block => {
-        //           cardHtml += `<div>${block.text}</div>`;
-        //         });
-        //       }
-
-        //       cardHtml += '</div>';
-        //       resultDiv.innerHTML += cardHtml;
-        //     });
-        //   } else {
-        //     resultDiv.innerHTML = '<div style="color:#d9534f">Не найдено</div>';
-        //   }
-        // };
-
-        //         document.getElementById('searchInput').oninput = () => {
-        //   const query = document.getElementById('searchInput').value;
-        //   const exactMatch = document.getElementById('exactMatch').checked;
-        //   const headerIndex = parseInt(document.getElementById('headerFloorSelect').value);
-        //   const resultDiv = document.getElementById('searchResult');
-
-        //   if (!query) {
-        //     resultDiv.innerHTML = '';
-        //     return;
-        //   }
-
-        //   const foundRows = findRowByQuery(query, exactMatch);
-        //   if (foundRows.length > 0) {
-        //     resultDiv.innerHTML = '';
-        //     foundRows.forEach((row, idx) => {
-        //       let cardHtml = `<div class="match-card"><strong>Найдено (строка ${structuredRows.indexOf(row)}):</strong><br>`;
-
-        //       // Если выбрана шапка — используем её как названия колонок
-        //       if (headerIndex >= 0 && headerIndex < structuredRows.length) {
-        //         const headerRow = structuredRows[headerIndex];
-        //         // Сортируем блоки шапки и данных по X
-        //         const sortedHeader = [...headerRow.blocks].sort((a, b) => a.x - b.x);
-        //         const sortedData = [...row.blocks].sort((a, b) => a.x - b.x);
-
-        //         // Сопоставляем по индексу
-        //         sortedData.forEach((block, i) => {
-        //           const label = sortedHeader[i] ? sortedHeader[i].text : `Колонка ${i + 1}`;
-        //           cardHtml += `<div><strong>${label}:</strong> ${block.text}</div>`;
-        //         });
-        //       } else {
-        //         // Без шапки — просто перечисляем
-        //         row.blocks.forEach(block => {
-        //           cardHtml += `<div>${block.text}</div>`;
-        //         });
-        //       }
-
-        //       cardHtml += '</div>';
-        //       resultDiv.innerHTML += cardHtml;
-        //     });
-        //   } else {
-        //     resultDiv.innerHTML = '<div style="color:#d9534f">Не найдено</div>';
-        //   }
-        // };
-
-
-
-        // document.getElementById('searchInput').oninput = () => {
-        //   const query = document.getElementById('searchInput').value;
-        //   const exactMatch = document.getElementById('exactMatch').checked;
-        //   const resultDiv = document.getElementById('searchResult');
-
-        //   if (!query) {
-        //     resultDiv.innerHTML = '';
-        //     return;
-        //   }
-
-        //   const foundRows = findRowByQuery(query, exactMatch);
-        //   if (foundRows.length > 0) {
-        //     resultDiv.innerHTML = '';
-        //     foundRows.forEach((row, idx) => {
-        //       const rowText = row.blocks.map(b => b.text).join(' | ');
-        //       resultDiv.innerHTML += `<div class="match-card"><strong>Найдено (строка ${idx}):</strong> ${rowText}</div>`;
-        //     });
-        //   } else {
-        //     resultDiv.innerHTML = '<div style="color:#d9534f">Не найдено</div>';
-        //   }
-        // };
 
       } catch (error) {
         document.getElementById('status').textContent = 'Ошибка: ' + error.message;
@@ -1142,36 +692,49 @@ document.getElementById('searchInput').oninput = () => {
   document.getElementById('status').textContent = 'Анализ...';
   document.querySelectorAll('.debug-label').forEach(el => el.remove());
 
-  // === 1. Обнаружение и объединение горизонтальных линий ===
+  // === 1. Горизонтальные линии ===
   let rawLines = detectHorizontalLines();
   horizontalLines = mergeNearbyHorizontalLines(rawLines);
 
-  // === 2. Классификация: этажи vs субэтапы ===
+  // === 2. Вертикальные линии и колонки ===
+  const verticalLines = detectVerticalLines();
+  verticalBreaks = verticalLines.map(line => line.x).sort((a, b) => a - b);
+
+  // Границы колонок: ТОЛЬКО между вертикальными линиями (без внешних)
+  const columnBounds = [];
+  if (verticalBreaks.length < 2) {
+    // Менее 2 линий → не можем построить таблицу → одна колонка
+    columnBounds.push({ left: 0, right: viewport.width });
+  } else {
+    // Только внутренние колонки
+    for (let i = 0; i < verticalBreaks.length - 1; i++) {
+      columnBounds.push({ left: verticalBreaks[i], right: verticalBreaks[i + 1] });
+    }
+  }
+  window.columnBounds = columnBounds;
+
+  // === 3. Определяем начало таблицы (левая граница первой внутренней колонки) ===
+  const tableStartX = columnBounds.length > 0 ? columnBounds[0].left : 0;
+
+  // === 4. Классификация горизонтальных линий ===
   let floorLines = [];
   let substageLines = [];
 
   if (horizontalLines.length > 0) {
-    const maxLength = Math.max(...horizontalLines.map(l => l.endX - l.startX));
-    const FLOOR_THRESHOLD = maxLength * 0.5;
-
     horizontalLines.forEach(line => {
-      const length = line.endX - line.startX;
-      if (length >= FLOOR_THRESHOLD) {
+      // Зелёная линия = начинается ДО или НА границе таблицы
+      if (line.startX <= tableStartX + 5) {
         floorLines.push(line);
       } else {
         substageLines.push(line);
       }
     });
-  } else {
-    // Если линий нет — этажи = все линии (пусто), субэтапы = пусто
-    floorLines = [];
-    substageLines = [];
   }
 
-  // === 3. Перерисовка PDF БЕЗ ЛИНИЙ (один раз!) ===
+  // === 5. Перерисовка PDF и отрисовка линий ===
   await currentPage.render({ canvasContext: ctx, viewport }).promise;
 
-  // === 4. Рисуем ЗЕЛЁНЫЕ (этажи) ===
+  // Зелёные (этажи)
   ctx.strokeStyle = '#00ff00';
   ctx.lineWidth = 2;
   floorLines.forEach(line => {
@@ -1187,15 +750,13 @@ document.getElementById('searchInput').oninput = () => {
     document.getElementById('canvasContainer').appendChild(label);
   });
 
-  // === 5. Рисуем ОРАНЖЕВЫЕ (субэтапы) — ТОЛЬКО если они НЕ пересекаются с зелёными ===
+  // Оранжевые (субэтапы)
   ctx.strokeStyle = '#ff9800';
   ctx.lineWidth = 1;
   substageLines.forEach(line => {
-    // Проверка: не пересекается ли с зелёной линией по Y (допуск ±2px)
+    // Исключаем фрагменты зелёных линий (по Y)
     const isOverlappingGreen = floorLines.some(green => Math.abs(green.y - line.y) <= 2);
-    if (isOverlappingGreen) {
-      return; // ← игнорируем: это фрагмент зелёной линии
-    }
+    if (isOverlappingGreen) return;
 
     ctx.beginPath();
     ctx.moveTo(line.startX, line.y);
@@ -1211,120 +772,33 @@ document.getElementById('searchInput').oninput = () => {
     document.getElementById('canvasContainer').appendChild(label);
   });
 
-  // === 6. Обновляем глобальные переменные ===
-  horizontalLines = floorLines; // ← только этажи участвуют в группировке!
-  window.substageLines = substageLines.filter(line => {
-    return !floorLines.some(green => Math.abs(green.y - line.y) <= 2);
+  // === 6. Обновление глобальных переменных ===
+  horizontalLines = floorLines; // только этажи участвуют в группировке
+  window.substageLines = substageLines.filter(line => 
+    !floorLines.some(green => Math.abs(green.y - line.y) <= 2)
+  );
+
+  // === 7. Отображение вертикальных линий (полноценные красные линии) ===
+  verticalLines.forEach(line => {
+    ctx.strokeStyle = 'red';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(line.x, 0);
+    ctx.lineTo(line.x, canvas.height);
+    ctx.stroke();
+
+    const label = document.createElement('div');
+    label.className = 'debug-label';
+    label.textContent = 'break';
+    label.style.left = `${line.x + 10}px`;
+    label.style.top = `${canvas.height / 2}px`;
+    label.style.background = 'red';
+    label.style.color = 'white';
+    label.style.fontSize = '10px';
+    document.getElementById('canvasContainer').appendChild(label);
   });
 
-  // === 7. Вертикальные линии и колонки (без изменений) ===
-  const verticalLines = detectVerticalLines();
-  verticalBreaks = verticalLines.map(line => line.x).sort((a, b) => a - b);
-
-  const columnBounds = [];
-if (verticalBreaks.length === 0) {
-  columnBounds.push({ left: 0, right: viewport.width });
-} else if (verticalBreaks.length === 1) {
-  // Одна линия → не делаем таблицу
-  columnBounds.push({ left: 0, right: viewport.width });
-} else {
-  // Только ВНУТРЕННИЕ колонки между линиями
-  for (let i = 0; i < verticalBreaks.length - 1; i++) {
-    columnBounds.push({ left: verticalBreaks[i], right: verticalBreaks[i + 1] });
-  }
-}
-
-  // const columnBounds = [];
-  // if (verticalBreaks.length === 0) {
-  //   columnBounds.push({ left: 0, right: viewport.width });
-  // } else {
-  //   columnBounds.push({ left: 0, right: verticalBreaks[0] });
-  //   for (let i = 0; i < verticalBreaks.length - 1; i++) {
-  //     columnBounds.push({ left: verticalBreaks[i], right: verticalBreaks[i + 1] });
-  //   }
-  //   columnBounds.push({ left: verticalBreaks[verticalBreaks.length - 1], right: viewport.width });
-  // }
-
-  // 👇 СЮДА ВСТАВЛЯЕМ ЛОГИРОВАНИЕ 👇
-console.log('=== COLUMN BOUNDS ===');
-columnBounds.forEach((col, i) => {
-  console.log(`Колонка ${i + 1}: left=${col.left.toFixed(1)}, right=${col.right.toFixed(1)}`);
-});
-  window.columnBounds = columnBounds;
-
-  // === 8. Отображение вертикальных меток (как было) ===
-  // После создания verticalLines — рисуем полноценные линии
-verticalLines.forEach(line => {
-  // Рисуем линию от верха до низа
-  ctx.strokeStyle = 'red';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(line.x, 0); // от верха
-  ctx.lineTo(line.x, canvas.height); // до низа
-  ctx.stroke();
-
-  // Метка в середине
-  const label = document.createElement('div');
-  label.className = 'debug-label';
-  label.textContent = 'break';
-  label.style.left = `${line.x + 10}px`;
-  label.style.top = `${canvas.height / 2}px`;
-  label.style.background = 'red';
-  label.style.color = 'white';
-  label.style.fontSize = '10px';
-  canvasContainer.appendChild(label);
-});
-  // verticalLines.forEach(line => {
-  //   const circle = document.createElement('div');
-  //   circle.style.cssText = `
-  //     position: absolute;
-  //     width: 10px;
-  //     height: 10px;
-  //     background: red;
-  //     border-radius: 50%;
-  //     border: 2px solid white;
-  //     left: ${line.x - 5}px;
-  //     top: ${(line.startY + line.endY) / 2 - 5}px;
-  //     z-index: 9999;
-  //     pointer-events: none;
-  //   `;
-  //   canvasContainer.appendChild(circle);
-
-  //   const label = document.createElement('div');
-  //   label.className = 'debug-label';
-  //   label.textContent = 'break';
-  //   label.style.left = `${line.x + 10}px`;
-  //   label.style.top = `${(line.startY + line.endY) / 2}px`;
-  //   label.style.background = 'red';
-  //   label.style.color = 'white';
-  //   label.style.fontSize = '10px';
-  //   canvasContainer.appendChild(label);
-  // });
-
-  structuredRows.forEach(row => {
-    const topY = row.topLine ? row.topLine.y : 0;
-    const bottomY = row.bottomLine ? row.bottomLine.y : canvas.height;
-    const midY = (topY + bottomY) / 2;
-    verticalLines.forEach(line => {
-      if (line.startY < bottomY && line.endY > topY) {
-        const circle = document.createElement('div');
-        circle.style.cssText = `
-          position: absolute;
-          width: 6px;
-          height: 6px;
-          background: red;
-          border-radius: 50%;
-          left: ${line.x - 3}px;
-          top: ${midY - 3}px;
-          z-index: 9998;
-          pointer-events: none;
-        `;
-        canvasContainer.appendChild(circle);
-      }
-    });
-  });
-
-  // === 9. Обновление структуры ===
+  // === 8. Обновление структуры строк ===
   const blocks = currentTextContent.items
     .filter(item => item.str.trim())
     .map(item => {
@@ -1338,215 +812,33 @@ verticalLines.forEach(line => {
   currentFloorIndex = -1;
   updateFloorPanel();
   updateHeaderFloorSelect();
+
+  // === 9. Карта ячеек для "Умной клетки" ===
+  const cellMap = {};
+  structuredRows.forEach((row, rowIndex) => {
+    if (window.columnBounds) {
+      window.columnBounds.forEach((col, colIndex) => {
+        const id = `cell_r${rowIndex}_c${colIndex}`;
+        const blocks = row.blocks.filter(b => 
+          b.x >= col.left && b.x < col.right
+        ).sort((a, b) => a.y - b.y);
+        cellMap[id] = {
+          id,
+          rowIndex,
+          colIndex,
+          blocks,
+          content: blocks.map(b => b.text).join(' | ')
+        };
+      });
+    }
+  });
+  window.cellMap = cellMap;
+  updateSmartCellSelect();
+
   document.getElementById('status').textContent = `Найдено: ${horizontalLines.length} этажей.`;
 });
-//     document.getElementById('detectLinesBtn').addEventListener('click', async () => {
-//       if (!currentPage) return;
 
-//       document.getElementById('status').textContent = 'Анализ...';
-//       document.querySelectorAll('.debug-label').forEach(el => el.remove());
-
-//       let rawLines = detectHorizontalLines();
-// horizontalLines = mergeNearbyHorizontalLines(rawLines);
-//       // horizontalLines = detectHorizontalLines();
-
-//       await currentPage.render({ canvasContext: ctx, viewport }).promise;
-
-//       ctx.strokeStyle = '#00ff00';
-//       ctx.lineWidth = 2;
-//       horizontalLines.forEach(line => {
-//         ctx.beginPath();
-//         ctx.moveTo(line.startX, line.y);
-//         ctx.lineTo(line.endX, line.y);
-//         ctx.stroke();
-
-//         // 🔥 БЭЙДЖИК ТОЧНО НА ЛИНИИ — без отступа вверх
-//         const label = document.createElement('div');
-//         label.className = 'debug-label line-label';
-//         label.textContent = `Y=${Math.round(line.y)}`;
-//         label.style.left = `${line.startX + 10}px`;
-//         label.style.top = `${line.y}px`; // ТОЧНО НА ЛИНИИ — без смещения
-//         document.getElementById('canvasContainer').appendChild(label);
-//       });
-
-//       // === ПЕРЕКЛАССИФИКАЦИЯ ЛИНИЙ: этажи vs субэтапы ===
-// if (horizontalLines.length > 0) {
-//   // Сортируем линии по Y (важно для "соседей")
-//   const sortedByY = [...horizontalLines].sort((a, b) => a.y - b.y);
-  
-//   // Найдём максимальную длину СРЕДИ ВСЕХ
-//   const maxLength = Math.max(...horizontalLines.map(l => l.endX - l.startX));
-  
-//   // Альтернатива: можно брать max среди ближайших соседей (±2 линии)
-//   // Но для MVP — глобальный максимум + порог 0.5
-  
-//   const FLOOR_THRESHOLD = maxLength * 0.5; // ← 50% от самой длинной
-  
-//   const newFloorLines = [];
-//   const substageLines = [];
-  
-//   // Проходим по всем линиям
-//   horizontalLines.forEach(line => {
-//     const length = line.endX - line.startX;
-//     if (length >= FLOOR_THRESHOLD) {
-//       newFloorLines.push(line);
-//     } else {
-//       substageLines.push(line);
-//     }
-//   });
-  
-//   // === ПЕРЕКРАСКА: стираем зелёные → рисуем заново с правильными цветами ===
-//   await currentPage.render({ canvasContext: ctx, viewport }).promise; // перерисовать PDF без линий
-  
-//   // Рисуем этажи — ЗЕЛЁНЫЕ
-//   ctx.strokeStyle = '#00ff00';
-//   ctx.lineWidth = 2;
-//   newFloorLines.forEach(line => {
-//     ctx.beginPath();
-//     ctx.moveTo(line.startX, line.y);
-//     ctx.lineTo(line.endX, line.y);
-//     ctx.stroke();
-//     const label = document.createElement('div');
-//     label.className = 'debug-label line-label';
-//     label.textContent = `Y=${Math.round(line.y)}`;
-//     label.style.left = `${line.startX + 10}px`;
-//     label.style.top = `${line.y}px`;
-//     document.getElementById('canvasContainer').appendChild(label);
-//   });
-  
-//   // Рисуем субэтапы — ОРАНЖЕВЫЕ
-//   ctx.strokeStyle = '#ff9800'; // ← оранжевый
-//   ctx.lineWidth = 1;
-//   substageLines.forEach(line => {
-//     ctx.beginPath();
-//     ctx.moveTo(line.startX, line.y);
-//     ctx.lineTo(line.endX, line.y);
-//     ctx.stroke();
-//     const label = document.createElement('div');
-//     label.className = 'debug-label line-label';
-//     label.textContent = `sub Y=${Math.round(line.y)}`;
-//     label.style.left = `${line.startX + 10}px`;
-//     label.style.top = `${line.y}px`;
-//     label.style.background = 'rgba(255, 152, 0, 0.7)';
-//     label.style.color = 'white';
-//     document.getElementById('canvasContainer').appendChild(label);
-//   });
-  
-//   // Обновляем глобальные переменные
-//   horizontalLines = newFloorLines; // ← теперь только этажи!
-//   window.substageLines = substageLines; // ← сохраняем субэтапы отдельно
-// }
-//       // После того как нарисовал горизонтальные линии
-// const verticalLines = detectVerticalLines();
-// verticalBreaks = verticalLines.map(line => line.x).sort((a, b) => a - b);
-// // Границы колонок: от левого края до первой линии, между линиями, и до правого края
-// const columnBounds = [];
-// if (verticalBreaks.length === 0) {
-//   columnBounds.push({ left: 0, right: viewport.width });
-// } else {
-//   columnBounds.push({ left: 0, right: verticalBreaks[0] });
-//   for (let i = 0; i < verticalBreaks.length - 1; i++) {
-//     columnBounds.push({ left: verticalBreaks[i], right: verticalBreaks[i + 1] });
-//   }
-//   columnBounds.push({ left: verticalBreaks[verticalBreaks.length - 1], right: viewport.width });
-// }
-// // Сохраняем глобально
-// window.columnBounds = columnBounds;
-
-// verticalLines.forEach(line => {
-//   const circle = document.createElement('div');
-//   circle.style.cssText = `
-//     position: absolute;
-//     width: 10px;
-//     height: 10px;
-//     background: red;
-//     border-radius: 50%;
-//     border: 2px solid white;
-//     left: ${line.x - 5}px;
-//     top: ${(line.startY + line.endY) / 2 - 5}px; /* ← середина линии */
-//     z-index: 9999;
-//     pointer-events: none;
-//   `;
-//   canvasContainer.appendChild(circle);
-
-//   const label = document.createElement('div');
-//   label.className = 'debug-label';
-//   label.textContent = 'break';
-//   label.style.left = `${line.x + 10}px`;
-//   label.style.top = `${(line.startY + line.endY) / 2}px`; /* ← середина */
-//   label.style.background = 'red';
-//   label.style.color = 'white';
-//   label.style.fontSize = '10px';
-//   canvasContainer.appendChild(label);
-// });
-
-// // После рисования кружочков вверху — рисуем на каждом этаже
-// // Рисуем точки ТОЛЬКО внутри этажей
-// structuredRows.forEach(row => {
-//   const topY = row.topLine ? row.topLine.y : 0;
-//   const bottomY = row.bottomLine ? row.bottomLine.y : canvas.height;
-//   const midY = (topY + bottomY) / 2;
-
-//   verticalLines.forEach(line => {
-//     // Проверяем, что линия пересекает этаж
-//     if (line.startY < bottomY && line.endY > topY) {
-//       const circle = document.createElement('div');
-//       circle.style.cssText = `
-//         position: absolute;
-//         width: 6px;
-//         height: 6px;
-//         background: red;
-//         border-radius: 50%;
-//         left: ${line.x - 3}px;
-//         top: ${midY - 3}px;
-//         z-index: 9998;
-//         pointer-events: none;
-//       `;
-//       canvasContainer.appendChild(circle);
-//     }
-//   });
-// });
-// // structuredRows.forEach(row => {
-// //   const midY = row.y; // или (row.topLine?.y || 0) + 10
-// //   verticalLines.forEach(line => {
-// //     const circle = document.createElement('div');
-// //     circle.style.cssText = `
-// //       position: absolute;
-// //       width: 6px;
-// //       height: 6px;
-// //       background: red;
-// //       border-radius: 50%;
-// //       left: ${line.x - 3}px;
-// //       top: ${midY - 3}px;
-// //       z-index: 9998;
-// //       pointer-events: none;
-// //     `;
-// //     canvasContainer.appendChild(circle);
-// //   });
-// // });
-      
-// const blocks = currentTextContent.items
-//         .filter(item => item.str.trim())
-//         .map(item => {
-//           const [,, , , x, y] = item.transform;
-//           const screenPoint = viewport.convertToViewportPoint(x, y);
-//           return { 
-//             text: item.str.trim(), 
-//             x: screenPoint[0], 
-//             y: screenPoint[1] 
-//           };
-//         });
-
-//       structuredRows = groupBlocksIntoRows(blocks);
-//       updateOutputAndLabels();
-//       currentFloorIndex = -1; // сбросить текущий этаж
-//       updateFloorPanel(); // обновить панель
-//       updateHeaderFloorSelect(); // ✅ вот сюда!
-//       document.getElementById('status').textContent = `Найдено: ${horizontalLines.length}.`;
-//     });
-
-    // === ФУНКЦИЯ: ГРУППИРОВКА БЛОКОВ В КОЛОНКИ ===
-function detectColumns(blocks) {
+    function detectColumns(blocks) {
   if (blocks.length === 0) return [];
 
   // Сортируем по X
@@ -1780,7 +1072,6 @@ for (let row of structuredRows) {
   html += '</table>';
   return html;
 }
-
 
 
 function drawFloorHighlight(floor) {
@@ -2145,146 +1436,7 @@ exportRegionsBtn.addEventListener('click', async () => {
   }
 });
   
-// === ПОЛНЫЙ КЛОН PDF → ТОЧНО КАК В РЕЖИМЕ ВЫДЕЛЕНИЯ, НО БЕЗ РАМКИ ===
-// document.getElementById('exportFullHtmlBtn').addEventListener('click', async () => {
-//   if (!currentTextContent || !viewport) {
-//     alert('Сначала загрузите PDF!');
-//     return;
-//   }
 
-//   let html = `<div style="position: relative; width: ${viewport.width}px; height: ${viewport.height}px; background: white;">\n`;
-
-//   currentTextContent.items.forEach(item => {
-//     if (!item.str.trim()) return;
-//     const [,, , , x, y] = item.transform;
-//     const pt = viewport.convertToViewportPoint(x, y);
-//     const tx = pt[0];
-//     const ty = pt[1];
-    
-//     // Экранируем текст
-//     const safeText = item.str.trim()
-//       .replace(/&/g, '&amp;')
-//       .replace(/</g, '<')
-//       .replace(/>/g, '>');
-    
-//     html += `<div style="position: absolute; left: ${tx}px; top: ${ty}px; white-space: nowrap;">${safeText}</div>\n`;
-//   });
-
-//   html += `</div>`;
-
-//   try {
-//     await navigator.clipboard.writeText(html);
-//     document.getElementById('status').textContent = '✅ Полный клон PDF скопирован в буфер!';
-//   } catch (err) {
-//     console.error(err);
-//     // Альтернатива: скачать файл, если буфер не работает
-//     const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-//     const url = URL.createObjectURL(blob);
-//     const a = document.createElement('a');
-//     a.href = url;
-//     a.download = 'pdf-full-clone.html';
-//     a.click();
-//     URL.revokeObjectURL(url);
-//     document.getElementById('status').textContent = '✅ Сохранено как файл (буфер недоступен)';
-//   }
-// });
-  
-// document.getElementById('exportFullHtmlBtn').addEventListener('click', async () => {
-//   if (!currentTextContent || !viewport || !window.columnBounds || horizontalLines.length === 0) {
-//     alert('Сначала выполните анализ!');
-//     return;
-//   }
-
-//   // === 1. Границы строк (этажей) ===
-//   const sortedLines = [...horizontalLines].sort((a, b) => a.y - b.y);
-//   const rowBounds = [];
-//   for (let i = 0; i < sortedLines.length; i++) {
-//     const top = i === 0 ? 0 : sortedLines[i - 1].y;
-//     const bottom = sortedLines[i].y;
-//     rowBounds.push({ top, bottom });
-//   }
-
-//   // === 2. Все текстовые блоки ===
-//   const allBlocks = currentTextContent.items
-//     .filter(item => item.str.trim())
-//     .map(item => {
-//       const [,, , , x, y] = item.transform;
-//       const pt = viewport.convertToViewportPoint(x, y);
-//       return { text: item.str.trim(), x: pt[0], y: pt[1] };
-//     });
-
-//   // === 3. Создаём ячейки и распределяем блоки ===
-//   const cells = [];
-//   rowBounds.forEach((rowBound, rowIndex) => {
-//     window.columnBounds.forEach((colBound, colIndex) => {
-//       const blocksInCell = allBlocks.filter(b =>
-//         b.x >= colBound.left && b.x < colBound.right &&
-//         b.y >= rowBound.top && b.y < rowBound.bottom
-//       ).sort((a, b) => a.y - b.y); // сортируем по Y
-
-//       cells.push({
-//         id: `cell_r${rowIndex}_c${colIndex}`,
-//         floorIndex: rowIndex,
-//         colIndex: colIndex,
-//         left: colBound.left,
-//         right: colBound.right,
-//         top: rowBound.top,
-//         bottom: rowBound.bottom,
-//         blocks: blocksInCell
-//       });
-//     });
-//   });
-
-//   // === 4. Рисуем ячейки на canvas (визуальная проверка) ===
-//   await currentPage.render({ canvasContext: ctx, viewport }).promise;
-//   cells.forEach(cell => {
-//     ctx.strokeStyle = 'rgba(0, 150, 255, 0.5)';
-//     ctx.lineWidth = 1;
-//     ctx.strokeRect(cell.left, cell.top, cell.right - cell.left, cell.bottom - cell.top);
-//   });
-
-//   // === 5. Генерируем HTML-таблицу ===
-//   let html = `<table class="pdf-structured" style="
-//     border-collapse: collapse;
-//     width: 100%;
-//     font-family: Arial, sans-serif;
-//     margin: 20px 0;
-//   ">`;
-
-//   rowBounds.forEach((_, rowIndex) => {
-//     html += `<tr data-floor="${rowIndex}">`;
-//     window.columnBounds.forEach((_, colIndex) => {
-//       const cell = cells.find(c => c.floorIndex === rowIndex && c.colIndex === colIndex);
-//       const content = cell.blocks.map(b => 
-//         `<div class="cell-line">${b.text.replace(/&/g, '&amp;').replace(/</g, '<').replace(/>/g, '>')}</div>`
-//       ).join('');
-//       html += `<td id="${cell.id}" data-floor="${rowIndex}" data-col="${colIndex}" style="
-//         border: 1px solid #ddd;
-//         background: rgba(230, 245, 255, 0.4);
-//         padding: 6px;
-//         vertical-align: top;
-//         min-width: 80px;
-//       ">${content}</td>`;
-//     });
-//     html += `</tr>`;
-//   });
-//   html += `</table>`;
-
-//   // === 6. Копируем в буфер ===
-//   try {
-//     await navigator.clipboard.writeText(html);
-//     document.getElementById('status').textContent = '✅ Структурированная таблица скопирована!';
-//   } catch (err) {
-//     const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-//     const url = URL.createObjectURL(blob);
-//     const a = document.createElement('a');
-//     a.href = url;
-//     a.download = 'structured-table.html';
-//     a.click();
-//     URL.revokeObjectURL(url);
-//     document.getElementById('status').textContent = '✅ Сохранено как structured-table.html';
-//   }
-// });
 document.getElementById('exportFullHtmlBtn').addEventListener('click', async () => {
   if (!currentTextContent || !viewport || !window.columnBounds) {
     alert('Сначала загрузите PDF и выполните анализ!');
@@ -2521,6 +1673,545 @@ window.saveCardForTelegram = async function(cardId) {
     alert('Ошибка копирования');
   }
 };
+
+function updateSmartCellSelect() {
+  const select = document.getElementById('smartCellSelect');
+  select.innerHTML = '<option value="">Выберите клетку</option>';
+  if (window.cellMap) {
+    Object.keys(window.cellMap).forEach(id => {
+      const opt = document.createElement('option');
+      opt.value = id;
+      opt.textContent = id;
+      select.appendChild(opt);
+    });
+    if (currentSmartCellId && window.cellMap[currentSmartCellId]) {
+      select.value = currentSmartCellId;
+    }
+  }
+}
+
+function highlightCell(cellId) {
+  const canvasContainer = document.getElementById('canvasContainer');
+  document.querySelectorAll('.smart-cell-highlight').forEach(el => el.remove());
+
+  if (!window.cellMap || !window.cellMap[cellId]) return;
+
+  const cell = window.cellMap[cellId];
+  if (cell.rowIndex >= structuredRows.length || !window.columnBounds[cell.colIndex]) return;
+
+  const row = structuredRows[cell.rowIndex];
+  const col = window.columnBounds[cell.colIndex];
+  const topY = row.topLine ? row.topLine.y : 0;
+  const bottomY = row.bottomLine ? row.bottomLine.y : canvas.height;
+
+  const box = document.createElement('div');
+  box.className = 'smart-cell-highlight';
+  box.style.cssText = `
+    position: absolute;
+    left: ${col.left}px;
+    top: ${topY}px;
+    width: ${col.right - col.left}px;
+    height: ${bottomY - topY}px;
+    border: 3px solid #00ffff; /* бирюза */
+    pointer-events: none;
+    z-index: 2001;
+  `;
+  canvasContainer.appendChild(box);
+}
+
+// === ФУНКЦИЯ: Обнаружение оранжевых линий внутри ячейки ===
+function detectOrangeLinesInCell(cellId) {
+    if (!window.cellMap || !window.cellMap[cellId] || !window.substageLines) {
+        return [];
+    }
+
+    const cell = window.cellMap[cellId];
+    const row = structuredRows[cell.rowIndex];
+    const col = window.columnBounds[cell.colIndex];
+
+    const topY = row.topLine ? row.topLine.y : 0;
+    const bottomY = row.bottomLine ? row.bottomLine.y : canvas.height;
+
+    // Фильтруем оранжевые линии, которые находятся внутри ячейки
+    const orangeLinesInCell = window.substageLines.filter(line => {
+        // Проверяем, что линия находится по Y внутри ячейки
+        const isInsideY = line.y > topY && line.y < bottomY;
+        
+        // Проверяем, что линия пересекает колонку по X (хотя бы частично)
+        const intersectsX = line.endX > col.left && line.startX < col.right;
+        
+        // Проверяем, что линия достаточно длинная внутри ячейки
+        const lineStartInCell = Math.max(line.startX, col.left);
+        const lineEndInCell = Math.min(line.endX, col.right);
+        const lineLengthInCell = lineEndInCell - lineStartInCell;
+        const isLongEnough = lineLengthInCell > 20; // минимальная длина 20px
+        
+        return isInsideY && intersectsX && isLongEnough;
+    });
+
+    return orangeLinesInCell;
+}
+
+// === ФУНКЦИЯ: Визуализация обнаруженных оранжевых линий ===
+function highlightOrangeLinesInCell(cellId) {
+    const canvasContainer = document.getElementById('canvasContainer');
+    
+    // Удаляем предыдущие индикаторы
+    document.querySelectorAll('.orange-line-detector').forEach(el => el.remove());
+
+    const orangeLines = detectOrangeLinesInCell(cellId);
+    
+    if (orangeLines.length === 0) {
+        return false; // линий не найдено
+    }
+
+    // Добавляем красные индикаторы для каждой найденной линии
+    orangeLines.forEach((line, index) => {
+        const cell = window.cellMap[cellId];
+        const col = window.columnBounds[cell.colIndex];
+        
+        // Определяем видимую часть линии внутри ячейки
+        const visibleStartX = Math.max(line.startX, col.left);
+        const visibleEndX = Math.min(line.endX, col.right);
+
+        // Создаем индикатор линии
+        const lineIndicator = document.createElement('div');
+        lineIndicator.className = 'orange-line-detector';
+        lineIndicator.style.cssText = `
+            position: absolute;
+            left: ${visibleStartX}px;
+            top: ${line.y - 1}px;
+            width: ${visibleEndX - visibleStartX}px;
+            height: 2px;
+            background: #ff0000;
+            pointer-events: none;
+            z-index: 2003;
+        `;
+        canvasContainer.appendChild(lineIndicator);
+
+        // Добавляем бейдж-счётчик
+        if (index === 0) {
+            const badge = document.createElement('div');
+            badge.className = 'orange-line-detector';
+            badge.style.cssText = `
+                position: absolute;
+                left: ${visibleStartX + 10}px;
+                top: ${line.y - 20}px;
+                background: #ff0000;
+                color: white;
+                padding: 2px 6px;
+                border-radius: 10px;
+                font-size: 10px;
+                font-weight: bold;
+                pointer-events: none;
+                z-index: 2004;
+            `;
+            badge.textContent = `Линий: ${orangeLines.length}`;
+            canvasContainer.appendChild(badge);
+        }
+    });
+
+    return orangeLines.length > 0;
+}
+
+// === ОБНОВЛЕННАЯ ФУНКЦИЯ: Показать информацию о ячейке ===
+function showCellInfo(cellId, direction = 'self') {
+    const output = document.getElementById('smartOutput');
+    document.querySelectorAll('.smart-cell-highlight, .subcell-highlight, .orange-line-detector').forEach(el => el.remove());
+
+    if (!window.cellMap || !window.cellMap[cellId]) {
+        output.innerHTML = '<div style="color:#d9534f;">Клетка не найдена</div>';
+        return;
+    }
+
+    // Подсветка основной ячейки
+    highlightCell(cellId);
+    
+    // Обнаружение и подсветка оранжевых линий
+    const hasOrangeLines = highlightOrangeLinesInCell(cellId);
+    
+    // Подсветка субъячеек + получение количества
+    const subcellCount = highlightSubcells(cellId);
+
+    const cell = window.cellMap[cellId];
+    
+    let html = `<div><strong>Активная:</strong> ${cell.id} → ${cell.content || '—'}</div>`;
+    html += `<div style="margin-top:6px; color:#f57f17; font-weight:bold;">Субъячеек: ${subcellCount}</div>`;
+    
+    // Добавляем информацию об оранжевых линиях
+    if (hasOrangeLines) {
+        html += `<div style="margin-top:4px; color:#ff0000; font-weight:bold;">🔍 Обнаружены оранжевые линии!</div>`;
+    } else {
+        html += `<div style="margin-top:4px; color:#666;">Оранжевых линий нет</div>`;
+    }
+
+    output.innerHTML = html;
+}
+
+// === ОБНОВЛЕННАЯ ФУНКЦИЯ: Подсветка субъячеек ===
+function highlightSubcells(cellId) {
+    const canvasContainer = document.getElementById('canvasContainer');
+    document.querySelectorAll('.subcell-highlight').forEach(el => el.remove());
+
+    if (!window.cellMap || !window.cellMap[cellId]) return 0;
+
+    const cell = window.cellMap[cellId];
+    const row = structuredRows[cell.rowIndex];
+    const col = window.columnBounds[cell.colIndex];
+
+    const topY = row.topLine ? row.topLine.y : 0;
+    const bottomY = row.bottomLine ? row.bottomLine.y : canvas.height;
+
+    // Используем обнаруженные оранжевые линии для разделения
+    const orangeLines = detectOrangeLinesInCell(cellId);
+    const uniqueLines = orangeLines
+        .map(line => line.y)
+        .filter((y, index, array) => array.indexOf(y) === index) // уникальные Y
+        .sort((a, b) => a - b);
+
+    // Границы сегментов: от верха ячейки → оранжевые линии → до низа
+    const segmentBounds = [topY, ...uniqueLines, bottomY];
+
+    // Считаем только те сегменты, в которых есть текст
+    let validSegments = 0;
+    const highlightedSegments = [];
+
+    for (let i = 0; i < segmentBounds.length - 1; i++) {
+        const segTop = segmentBounds[i];
+        const segBottom = segmentBounds[i + 1];
+        if (segBottom - segTop < 3) continue;
+
+        // Проверяем, есть ли текстовые блоки в этом сегменте
+        const blocksInSegment = cell.blocks.filter(block =>
+            block.y >= segTop && block.y < segBottom
+        );
+
+        if (blocksInSegment.length > 0) {
+            validSegments++;
+            highlightedSegments.push({ top: segTop, bottom: segBottom });
+        }
+    }
+
+    // Подсвечиваем только сегменты с текстом
+    highlightedSegments.forEach(seg => {
+        const segBox = document.createElement('div');
+        segBox.className = 'subcell-highlight';
+        segBox.style.cssText = `
+            position: absolute;
+            left: ${col.left}px;
+            top: ${seg.top}px;
+            width: ${col.right - col.left}px;
+            height: ${seg.bottom - seg.top}px;
+            border: 2px solid #ffeb3b;
+            background: rgba(255, 235, 59, 0.1);
+            pointer-events: none;
+            z-index: 2002;
+        `;
+        canvasContainer.appendChild(segBox);
+    });
+
+    return validSegments;
+}
+
+
+document.getElementById('smartCellSelect').addEventListener('change', (e) => {
+  const id = e.target.value;
+  if (id) {
+    currentSmartCellId = id;
+    showCellInfo(id); // ← вместо highlightCell + ручного вывода
+  } else {
+    currentSmartCellId = null;
+    document.querySelectorAll('.smart-cell-highlight, .subcell-highlight').forEach(el => el.remove());
+    document.getElementById('smartOutput').innerHTML = '';
+  }
+});
+
+
+
+// === ФУНКЦИЯ: Поиск ячеек, касающихся правого края текущей ===
+function findRightTouchingCells(cellId) {
+    if (!window.cellMap || !window.cellMap[cellId]) return [];
+    
+    const currentCell = window.cellMap[cellId];
+    const currentCol = window.columnBounds[currentCell.colIndex];
+    const currentRow = structuredRows[currentCell.rowIndex];
+    
+    const currentTop = currentRow.topLine ? currentRow.topLine.y : 0;
+    const currentBottom = currentRow.bottomLine ? currentRow.bottomLine.y : canvas.height;
+    const currentRight = currentCol.right;
+    
+    const touchingCells = [];
+    
+    // Ищем все ячейки, которые касаются правого края текущей
+    Object.values(window.cellMap).forEach(cell => {
+        if (cell.id === cellId) return; // пропускаем текущую
+        
+        const cellCol = window.columnBounds[cell.colIndex];
+        const cellRow = structuredRows[cell.rowIndex];
+        
+        const cellLeft = cellCol.left;
+        const cellTop = cellRow.topLine ? cellRow.topLine.y : 0;
+        const cellBottom = cellRow.bottomLine ? cellRow.bottomLine.y : canvas.height;
+        
+        // Проверяем касание по X (правый край текущей = левый край соседней)
+        const isTouchingX = Math.abs(currentRight - cellLeft) <= 2; // допуск 2px
+        
+        // Проверяем пересечение по Y (хотя бы частичное)
+        const isOverlappingY = !(cellBottom <= currentTop || cellTop >= currentBottom);
+        
+        if (isTouchingX && isOverlappingY) {
+            touchingCells.push(cell);
+        }
+    });
+    
+    return touchingCells;
+}
+
+// === ФУНКЦИЯ: Рекурсивный прострел по правому краю ===
+function shootRightRecursive(cellId, visited = new Set(), depth = 0) {
+    if (visited.has(cellId)) return null;
+    visited.add(cellId);
+    
+    const cell = window.cellMap[cellId];
+    if (!cell) return null;
+    
+    const result = {
+        id: cellId,
+        content: cell.content,
+        rowIndex: cell.rowIndex,
+        colIndex: cell.colIndex,
+        depth: depth,
+        children: []
+    };
+    
+    // Находим ячейки, касающиеся правого края
+    const rightCells = findRightTouchingCells(cellId);
+    
+    // Рекурсивно обрабатываем каждую соседнюю ячейку
+    rightCells.forEach(nextCell => {
+        if (!visited.has(nextCell.id)) {
+            const childResult = shootRightRecursive(nextCell.id, visited, depth + 1);
+            if (childResult) {
+                result.children.push(childResult);
+            }
+        }
+    });
+    
+    return result;
+}
+
+// === ФУНКЦИЯ: Визуализация пути прострела ===
+function visualizeShootPath(tree) {
+    const canvasContainer = document.getElementById('canvasContainer');
+    
+    // Удаляем предыдущие визуализации
+    document.querySelectorAll('.shoot-path, .shoot-node').forEach(el => el.remove());
+    
+    if (!tree) return;
+    
+    // Рекурсивная функция для визуализации
+    function visualizeNode(node, parentX = null, parentY = null) {
+        const cell = window.cellMap[node.id];
+        const col = window.columnBounds[cell.colIndex];
+        const row = structuredRows[cell.rowIndex];
+        
+        const centerX = col.left + (col.right - col.left) / 2;
+        const centerY = row.topLine ? row.topLine.y + 20 : 20;
+        
+        // Рисуем узел
+        const nodeEl = document.createElement('div');
+        nodeEl.className = 'shoot-node';
+        nodeEl.style.cssText = `
+            position: absolute;
+            left: ${centerX - 40}px;
+            top: ${centerY}px;
+            width: 80px;
+            padding: 4px;
+            background: ${node.depth === 0 ? '#3498db' : '#e74c3c'};
+            color: white;
+            border-radius: 4px;
+            font-size: 10px;
+            text-align: center;
+            pointer-events: none;
+            z-index: 2005;
+            cursor: pointer;
+        `;
+        nodeEl.textContent = `R${node.rowIndex}C${node.colIndex}`;
+        nodeEl.title = node.content;
+        canvasContainer.appendChild(nodeEl);
+        
+        // Рисуем соединение с родителем
+        if (parentX !== null && parentY !== null) {
+            const pathEl = document.createElement('div');
+            pathEl.className = 'shoot-path';
+            pathEl.style.cssText = `
+                position: absolute;
+                left: ${parentX}px;
+                top: ${parentY + 20}px;
+                width: ${centerX - parentX}px;
+                height: 2px;
+                background: #27ae60;
+                pointer-events: none;
+                z-index: 2004;
+                transform-origin: left center;
+            `;
+            canvasContainer.appendChild(pathEl);
+        }
+        
+        // Рекурсивно визуализируем детей
+        node.children.forEach(child => {
+            visualizeNode(child, centerX, centerY);
+        });
+    }
+    
+    visualizeNode(tree);
+}
+
+// === ФУНКЦИЯ: Отображение дерева прострела в интерфейсе ===
+function displayShootTree(tree) {
+    const output = document.getElementById('smartOutput');
+    
+    if (!tree) {
+        output.innerHTML = '<div style="color:#666;">Нет данных для прострела</div>';
+        return;
+    }
+    
+    let html = `<div style="margin-bottom: 10px; font-weight: bold; color: #2c3e50;">🌳 Дерево прострела:</div>`;
+    
+    // Рекурсивная функция для построения HTML
+    function buildTreeHtml(node, level = 0) {
+        const indent = '&nbsp;'.repeat(level * 4);
+        const hasChildren = node.children.length > 0;
+        
+        let nodeHtml = `
+            <div style="margin: 4px 0; padding: 6px; background: ${level === 0 ? '#e3f2fd' : '#fff3e0'}; 
+                        border: 1px solid ${level === 0 ? '#bbdefb' : '#ffcc80'}; border-radius: 4px; 
+                        cursor: pointer;" 
+                 onclick="selectShootNode('${node.id}')"
+                 onmouseover="highlightShootNode('${node.id}')"
+                 onmouseout="clearShootHighlight()">
+                ${indent}${hasChildren ? '🔽' : '🔹'} 
+                <strong>R${node.rowIndex}C${node.colIndex}:</strong> 
+                ${node.content || '—'}
+                ${hasChildren ? ` (+${node.children.length})` : ''}
+            </div>
+        `;
+        
+        node.children.forEach(child => {
+            nodeHtml += buildTreeHtml(child, level + 1);
+        });
+        
+        return nodeHtml;
+    }
+    
+    html += buildTreeHtml(tree);
+    output.innerHTML = html;
+}
+
+// === ФУНКЦИИ ДЛЯ ВЗАИМОДЕЙСТВИЯ С ДЕРЕВОМ ===
+function selectShootNode(cellId) {
+    currentSmartCellId = cellId;
+    document.getElementById('smartCellSelect').value = cellId;
+    showCellInfo(cellId);
+    
+    // Перестраиваем дерево от выбранного узла
+    const newTree = shootRightRecursive(cellId);
+    displayShootTree(newTree);
+}
+
+function highlightShootNode(cellId) {
+    document.querySelectorAll('.shoot-node-highlight').forEach(el => el.remove());
+    
+    const cell = window.cellMap[cellId];
+    if (!cell) return;
+    
+    const col = window.columnBounds[cell.colIndex];
+    const row = structuredRows[cell.rowIndex];
+    
+    const highlight = document.createElement('div');
+    highlight.className = 'shoot-node-highlight';
+    highlight.style.cssText = `
+        position: absolute;
+        left: ${col.left}px;
+        top: ${row.topLine ? row.topLine.y : 0}px;
+        width: ${col.right - col.left}px;
+        height: ${(row.bottomLine ? row.bottomLine.y : canvas.height) - (row.topLine ? row.topLine.y : 0)}px;
+        border: 3px solid #9b59b6;
+        background: rgba(155, 89, 182, 0.1);
+        pointer-events: none;
+        z-index: 2006;
+    `;
+    document.getElementById('canvasContainer').appendChild(highlight);
+}
+
+function clearShootHighlight() {
+    document.querySelectorAll('.shoot-node-highlight').forEach(el => el.remove());
+}
+
+// === ОБНОВЛЕННАЯ ФУНКЦИЯ: Показать информацию о ячейке ===
+function showCellInfo(cellId, direction = 'self') {
+    const output = document.getElementById('smartOutput');
+    document.querySelectorAll('.smart-cell-highlight, .subcell-highlight, .orange-line-detector, .shoot-path, .shoot-node').forEach(el => el.remove());
+
+    if (!window.cellMap || !window.cellMap[cellId]) {
+        output.innerHTML = '<div style="color:#d9534f;">Клетка не найдена</div>';
+        return;
+    }
+
+    // Подсветка основной ячейки
+    highlightCell(cellId);
+    
+    // Обнаружение и подсветка оранжевых линий
+    const hasOrangeLines = highlightOrangeLinesInCell(cellId);
+    
+    // Подсветка субъячеек + получение количества
+    const subcellCount = highlightSubcells(cellId);
+    
+    // Строим дерево прострела
+    const shootTree = shootRightRecursive(cellId);
+    visualizeShootPath(shootTree);
+
+    const cell = window.cellMap[cellId];
+    
+    let html = `<div><strong>Активная:</strong> ${cell.id} → ${cell.content || '—'}</div>`;
+    html += `<div style="margin-top:6px; color:#f57f17; font-weight:bold;">Субъячеек: ${subcellCount}</div>`;
+    
+    // Добавляем информацию об оранжевых линиях
+    if (hasOrangeLines) {
+        html += `<div style="margin-top:4px; color:#ff0000; font-weight:bold;">🔍 Обнаружены оранжевые линии!</div>`;
+    } else {
+        html += `<div style="margin-top:4px; color:#666;">Оранжевых линий нет</div>`;
+    }
+
+    output.innerHTML = html;
+    
+    // Отображаем дерево прострела отдельно
+    displayShootTree(shootTree);
+}
+
+// === ОБНОВЛЕННЫЕ ОБРАБОТЧИКИ СТРЕЛОК ===
+['Up', 'Down', 'Left', 'Right'].forEach(dir => {
+    document.getElementById(`smart${dir}`).addEventListener('click', () => {
+        if (!currentSmartCellId) return;
+        const current = window.cellMap[currentSmartCellId];
+        let newRow = current.rowIndex;
+        let newCol = current.colIndex;
+        if (dir === 'Up') newRow--;
+        else if (dir === 'Down') newRow++;
+        else if (dir === 'Left') newCol--;
+        else if (dir === 'Right') newCol++;
+
+        if (newRow < 0 || newRow >= structuredRows.length) return;
+        if (newCol < 0 || newCol >= window.columnBounds.length) return;
+
+        const newId = `cell_r${newRow}_c${newCol}`;
+        if (!window.cellMap[newId]) return;
+
+        currentSmartCellId = newId;
+        document.getElementById('smartCellSelect').value = newId;
+        showCellInfo(newId);
+    });
+});
   
   </script>
 
