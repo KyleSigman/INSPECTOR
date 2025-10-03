@@ -20,7 +20,7 @@
       position: fixed;
       top: 0px;
       right:0px;
-    margin: 12px;
+    margin: 5px;
       z-index: 100;
       background: #007acc;
       color: white;
@@ -36,7 +36,7 @@
       position: fixed;
       top: 50px;
       right:0px;
-    margin: 12px;
+    margin: 5px;
       z-index: 100;
       background: #007acc;
       color: white;
@@ -54,7 +54,7 @@
       position: fixed;
       top: 0;
       left: -100%;
-      width: 90%;
+      width: 86%;
       max-width: 600px;
       height: 100%;
       background: #1e1e1e;
@@ -136,7 +136,46 @@
       display: block;
     }
   </style>
-  
+  <!-- Подключаем Firebase SDK -->
+
+
+<!-- Подключаем Firebase SDK (compat mode) -->
+<script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-database-compat.js"></script>
+
+<script>
+  // Твой Firebase конфиг
+  const firebaseConfig = {
+    apiKey: "AIzaSyCVr3ZztynpNzkeFY3aLKFN777oPunon4o",
+    authDomain: "inspector-24f9b.firebaseapp.com",
+    databaseURL: "https://inspector-24f9b-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "inspector-24f9b",
+    storageBucket: "inspector-24f9b.firebasestorage.app",
+    messagingSenderId: "590955045913",
+    appId: "1:590955045913:web:164311eb98caeca7643688"
+  };
+
+  // Инициализация
+  firebase.initializeApp(firebaseConfig);
+
+  // Получаем доступ к Realtime Database
+  const db = firebase.database();
+
+  console.log('✅ Firebase инициализирован в обычном HTML!');
+</script>
+
+<script>
+  // Запишем тестовое значение
+db.ref('test').set({
+  message: 'Привет из обычного HTML!',
+  timestamp: Date.now()
+}).then(() => {
+  console.log('✅ Тестовое сообщение отправлено в Firebase!');
+}).catch(err => {
+  console.error('❌ Ошибка при отправке:', err);
+});
+</script>
+
 </head>
 <body>
   <!-- Кнопка "Редактировать" -->
@@ -162,122 +201,945 @@
     <iframe id="output" sandbox="allow-same-origin allow-scripts"></iframe>
   </div>
 
+  <!-- Поле ввода имени -->
+<div id="name-input-container" style="
+position: fixed;
+bottom: 0px;
+left: 0px;
+background: white;
+padding: 5px;
+border-radius: 6px;
+box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+z-index: 200;
+font-family: sans-serif;
+font-size: 14px;
+">
+<input 
+  type="text" 
+  id="username-input" 
+  placeholder="Твоё имя" 
+  value="" 
+  style="width: 150px; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px;"
+/>
+</div>
+
+<script>
+  const usernameInput = document.getElementById('username-input');
+  window.userName = 'Гость'; // ← глобально
+
+  const savedName = localStorage.getItem('livehtml_username');
+  if (savedName) {
+    window.userName = savedName;
+    usernameInput.value = savedName;
+  }
+
+  usernameInput.addEventListener('input', () => {
+    window.userName = usernameInput.value.trim() || 'Гость';
+    localStorage.setItem('livehtml_username', window.userName);
+  });
+</script>
+
   <script>
-    const toggleBtn = document.getElementById('toggle-btn');
-    const closeBtn = document.getElementById('close-btn');
-    const editorPanel = document.getElementById('editor-panel');
-    const overlay = document.getElementById('overlay');
-    const codeEl = document.getElementById('code');
-    const outputEl = document.getElementById('output');
+  const toggleBtn = document.getElementById('toggle-btn');
+  const closeBtn = document.getElementById('close-btn');
+  const editorPanel = document.getElementById('editor-panel');
+  const overlay = document.getElementById('overlay');
+  const codeEl = document.getElementById('code');
+  const outputEl = document.getElementById('output');
+
+  // 💅 Стили для таблиц (внедряем внутрь iframe)
+  const TABLE_STYLES = `
+    <style>
+      /* Стили для семантических таблиц */
+      .pdf-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        font-size: 14px;
+        color: #333;
+        background: white;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      }
+      .pdf-table th,
+      .pdf-table td {
+        border: 1px solid #ccc;
+        padding: 10px 12px;
+        text-align: left;
+        vertical-align: top;
+      }
+      .pdf-table tbody tr:nth-child(even) {
+        background-color: #f9f9f9;
+      }
+      .pdf-table thead th {
+        background-color: #f0f0f0;
+        font-weight: 600;
+        color: #222;
+      }
+    </style>
+  `;
+
+  function updatePreview() {
+    let html = codeEl.value.trim();
+
+    // Если в коде есть <head> — вставляем стили туда
+    if (html.includes('<head>')) {
+      html = html.replace('<head>', `<head>\n${TABLE_STYLES}`);
+    } 
+    // Иначе — вставляем в начало <body> или просто в начало
+    else if (html.includes('<body>')) {
+      html = html.replace('<body>', `<body>\n${TABLE_STYLES}`);
+    } 
+    else {
+      // Просто добавляем в начало
+      html = TABLE_STYLES + html;
+    }
+
+    const doc = outputEl.contentDocument || outputEl.contentWindow.document;
+    doc.open();
+    doc.write(html);
+    doc.close();
+  }
+
+// === СИНХРОНИЗАЦИЯ КОДА В РЕАЛЬНОМ ВРЕМЕНИ ===
+
+const codeRef = db.ref('livehtml/code'); // Путь в Firebase для хранения кода
+
+// При запуске — загружаем последний сохранённый код
+codeRef.once('value').then(snapshot => {
+  const savedCode = snapshot.val();
+  if (savedCode && codeEl.value.trim() === '') {
+    codeEl.value = savedCode;
+    updatePreview(); // сразу показываем сохранённое
+  }
+});
+
+// Слушаем изменения от других пользователей
+codeRef.on('value', (snapshot) => {
+  const remoteCode = snapshot.val();
+  if (remoteCode && codeEl.value !== remoteCode) {
+    codeEl.value = remoteCode;
+    updatePreview(); // обновляем превью
+  }
+});
+
+// Отправляем локальные изменения в Firebase (с дебаунсом, чтобы не спамить)
+let timeoutId;
+codeEl.addEventListener('input', () => {
+  clearTimeout(timeoutId);
+  timeoutId = setTimeout(() => {
+    codeRef.set(codeEl.value); // отправляем в базу
+  }, 300); // задержка 300мс — чтобы не писать каждый символ
+});
+
+  function openEditor() {
+    editorPanel.classList.add('active');
+    overlay.classList.add('active');
+    updatePreview();
+  }
+
+  function closeEditor() {
+    editorPanel.classList.remove('active');
+    overlay.classList.remove('active');
+  }
+
+  toggleBtn.addEventListener('click', openEditor);
+  closeBtn.addEventListener('click', closeEditor);
+  overlay.addEventListener('click', closeEditor);
+  codeEl.addEventListener('input', updatePreview);
+
+  updatePreview();
+</script>
+
+
+  <script>
+    // === Настройка: имя пользователя из localStorage или prompt ===
+    // === Получаем имя из поля ввода #username-input ===
+// const usernameInput = document.getElementById('username-input');
+// let userName = 'Гость'; // значение по умолчанию
+
+// Восстанавливаем имя из localStorage
+// const savedName = localStorage.getItem('livehtml_username');
+// if (savedName) {
+//   userName = savedName;
+//   usernameInput.value = savedName;
+// }
+
+// Обновляем имя при вводе
+// usernameInput.addEventListener('input', () => {
+//   const value = usernameInput.value.trim();
+//   userName = value || 'Гость'; // если пусто — Гость
+//   localStorage.setItem('livehtml_username', userName);
+// });
+
+// // На всякий случай — можно оставить blur, если нужно
+// usernameInput.addEventListener('blur', () => {
+//   if (!usernameInput.value.trim()) {
+//     usernameInput.value = userName;
+//   }
+// });
+    // let userName = localStorage.getItem('livehtml_username') || '';
+    
+    // if (!userName) {
+    //   userName = prompt('Введите ваше имя:', 'Гость') || 'Гость';
+    //   localStorage.setItem('livehtml_username', userName);
+    // }
   
-    // 💅 Стили для таблиц (внедряем внутрь iframe)
-    const TABLE_STYLES = `
-      <style>
-        /* Стили для семантических таблиц */
-        .pdf-table {
-          width: 100%;
-          border-collapse: collapse;
-          margin: 20px 0;
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-          font-size: 14px;
-          color: #333;
-          background: white;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        .pdf-table th,
-        .pdf-table td {
-          border: 1px solid #ccc;
-          padding: 10px 12px;
-          text-align: left;
-          vertical-align: top;
-        }
-        .pdf-table tbody tr:nth-child(even) {
-          background-color: #f9f9f9;
-        }
-        .pdf-table thead th {
-          background-color: #f0f0f0;
-          font-weight: 600;
-          color: #222;
-        }
-      </style>
+    // === Ссылка на базу данных Firebase (предполагается, что db уже определён) ===
+    const messagesRef = db.ref('livehtml/messages');
+  
+    // === Создание интерфейса чата ===
+    const chatContainer = document.createElement('div');
+    chatContainer.id = 'livehtml-chat';
+    chatContainer.style.cssText = `
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      max-width: 480px;
+      height: 280px;
+      border-top: 1px solid #3a3a3a;
+      background: #1e1e1e;
+      color: white;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 14px;
+      box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+      display: flex;
+      flex-direction: column;
+      z-index: 9999;
+      margin: 0 auto;
+      right: 0;
+      overflow: hidden;
+      border-radius: 12px 12px 0 0;
     `;
   
-    function updatePreview() {
-      let html = codeEl.value.trim();
+    // Заголовок
+    const header = document.createElement('div');
+    header.style.cssText = `
+      padding: 10px 15px;
+      background: #2d2d2d;
+      font-weight: 600;
+      font-size: 15px;
+      border-bottom: 1px solid #3a3a3a;
+    `;
+    header.textContent = 'Чат';
+    chatContainer.appendChild(header);
   
-      // Если в коде есть <head> — вставляем стили туда
-      if (html.includes('<head>')) {
-        html = html.replace('<head>', `<head>\n${TABLE_STYLES}`);
-      } 
-      // Иначе — вставляем в начало <body> или просто в начало
-      else if (html.includes('<body>')) {
-        html = html.replace('<body>', `<body>\n${TABLE_STYLES}`);
-      } 
-      else {
-        // Просто добавляем в начало
-        html = TABLE_STYLES + html;
+    // Основная зона сообщений
+    const messagesBox = document.createElement('div');
+    messagesBox.id = 'chat-messages';
+    messagesBox.style.cssText = `
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      scrollbar-width: thin;
+      scrollbar-color: #444 #1e1e1e;
+    `;
+    messagesBox.style.cssText += `
+      &::-webkit-scrollbar { width: 6px; }
+      &::-webkit-scrollbar-track { background: #1e1e1e; }
+      &::-webkit-scrollbar-thumb { background: #444; border-radius: 3px; }
+    `;
+    chatContainer.appendChild(messagesBox);
+  
+    // Поле ввода
+    const inputContainer = document.createElement('div');
+    inputContainer.style.cssText = `
+      display: flex;
+      padding: 8px 10px;
+      background: #2d2d2d;
+      border-top: 1px solid #3a3a3a;
+      gap: 8px;
+    `;
+  
+    const chatInput = document.createElement('input');
+    chatInput.type = 'text';
+    chatInput.placeholder = 'Написать сообщение...';
+    chatInput.style.cssText = `
+      flex: 1;
+      padding: 10px 12px;
+      border: none;
+      border-radius: 20px;
+      background: #3c3c3c;
+      color: white;
+      font-size: 14px;
+      outline: none;
+    `;
+  
+    inputContainer.appendChild(chatInput);
+    chatContainer.appendChild(inputContainer);
+  
+    // Добавляем чат на страницу
+    document.body.appendChild(chatContainer);
+  
+    // === Отправка сообщения ===
+    chatInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        const text = chatInput.value.trim();
+        if (text) {
+          messagesRef.push({
+            text,
+            user: window.userName,
+            // user: userName,
+            timestamp: Date.now(),
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          });
+          chatInput.value = '';
+        }
       }
+    });
   
-      const doc = outputEl.contentDocument || outputEl.contentWindow.document;
-      doc.open();
-      doc.write(html);
-      doc.close();
-    }
+    // === Показ сообщений ===
+    // === Показ сообщений ===
+messagesRef.limitToLast(50).on('child_added', (snapshot) => {
+  const msg = snapshot.val();
+
+  // Ждём, пока window.userName станет реальным
+  const checkName = setInterval(() => {
+    if (!window.userName || window.userName === 'Гость') return;
+
+    clearInterval(checkName);
+
+    const isMe = msg.user === window.userName;
+
+    const messageEl = document.createElement('div');
+    messageEl.style.cssText = `
+      display: flex;
+      flex-direction: ${isMe ? 'row-reverse' : 'row'};
+      align-items: flex-start;
+      gap: 8px;
+      max-width: 85%;
+      align-self: ${isMe ? 'flex-end' : 'flex-start'};
+    `;
+
+    const bubble = document.createElement('div');
+    bubble.style.cssText = `
+      background: ${isMe ? '#D63077' : '#2ecc71'};
+      color: white;
+      padding: 8px 12px;
+      border-radius: 18px;
+      font-size: 14px;
+      line-height: 1.4;
+    `;
+    bubble.textContent = msg.text;
+
+    const timeSpan = document.createElement('span');
+    timeSpan.textContent = msg.time;
+    timeSpan.style.cssText = `
+      font-size: 11px;
+      color: #aaa;
+      margin-${isMe ? 'left' : 'right'}: 8px;
+      align-self: flex-end;
+    `;
+
+
+    const nameSpan = document.createElement('span');
+      nameSpan.textContent = msg.user;
+      nameSpan.style.cssText = `
+        font-size: 12px;
+        color: #999;
+        font-weight: 500;
+        margin-bottom: 2px;
+      `;
+      messageEl.appendChild(nameSpan);
+    // if (!isMe) {
+
+    // }
+
+    messageEl.appendChild(bubble);
+    messageEl.appendChild(timeSpan);
+    messagesBox.appendChild(messageEl);
+    messagesBox.scrollTop = messagesBox.scrollHeight;
+  }, 10);
+});
+    // messagesRef.limitToLast(50).on('child_added', (snapshot) => {
+    //   const msg = snapshot.val();
+    //   const isMe = msg.user === window.userName;
+    //   // const isMe = msg.user === userName;
   
-    function openEditor() {
-      editorPanel.classList.add('active');
-      overlay.classList.add('active');
-      updatePreview();
-    }
+    //   const messageEl = document.createElement('div');
+    //   messageEl.style.cssText = `
+    //     display: flex;
+    //     flex-direction: ${isMe ? 'row-reverse' : 'row'};
+    //     align-items: flex-start;
+    //     gap: 8px;
+    //     max-width: 85%;
+    //     align-self: ${isMe ? 'flex-end' : 'flex-start'};
+    //   `;
   
-    function closeEditor() {
-      editorPanel.classList.remove('active');
-      overlay.classList.remove('active');
-    }
+    //   // Пузырь сообщения
+    //   const bubble = document.createElement('div');
+    //   bubble.style.cssText = `
+    //     background: ${isMe ? '#D63077' : '#2ecc71'};
+    //     color: white;
+    //     padding: 8px 12px;
+    //     border-radius: 18px;
+    //     font-size: 14px;
+    //     line-height: 1.4;
+    //     word-wrap: break-word;
+    //   `;
   
-    toggleBtn.addEventListener('click', openEditor);
-    closeBtn.addEventListener('click', closeEditor);
-    overlay.addEventListener('click', closeEditor);
-    codeEl.addEventListener('input', updatePreview);
+    //   // Текст
+    //   const textNode = document.createTextNode(msg.text);
+    //   bubble.appendChild(textNode);
   
-    updatePreview();
+    //   // Время
+    //   const timeSpan = document.createElement('span');
+    //   timeSpan.textContent = msg.time;
+    //   timeSpan.style.cssText = `
+    //     font-size: 11px;
+    //     color: #aaa;
+    //     margin-${isMe ? 'left' : 'right'}: 8px;
+    //     align-self: flex-end;
+    //   `;
+  
+    //   // Имя (только если это не я)
+    //   const nameSpan = document.createElement('span');
+    //   if (!isMe) {
+    //     nameSpan.textContent = msg.user;
+    //     nameSpan.style.cssText = `
+    //       font-size: 12px;
+    //       color: #999;
+    //       font-weight: 500;
+    //       margin-bottom: 2px;
+    //     `;
+    //     messageEl.appendChild(nameSpan);
+    //   }
+  
+    //   messageEl.appendChild(bubble);
+    //   messageEl.appendChild(timeSpan);
+  
+    //   // Прокрутка вниз
+    //   messagesBox.appendChild(messageEl);
+    //   messagesBox.scrollTop = messagesBox.scrollHeight;
+    // });
+
+    // === Кнопка сворачивания чата ===
+const toggleButton = document.createElement('button');
+toggleButton.innerHTML = '💬';
+toggleButton.style.cssText = `
+  position: fixed;
+  bottom: 15px;
+  right: 15px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: #D63077;
+  color: white;
+  font-size: 20px;
+  border: none;
+  outline: none;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  z-index: 9998;
+  display: none; /* Сначала скрыта, пока чат свёрнут */
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s, box-shadow 0.2s;
+`;
+
+toggleButton.addEventListener('click', () => {
+  chatContainer.style.display = 'flex';
+  toggleButton.style.display = 'none';
+});
+
+// Модифицируем заголовок, чтобы он служил кнопкой сворачивания
+header.style.cursor = 'pointer';
+header.addEventListener('click', () => {
+  chatContainer.style.display = 'none';
+  toggleButton.style.display = 'flex'; // или 'block', но лучше flex для центрирования
+});
+
+// Изначально показываем чат, кнопка скрыта
+document.body.appendChild(toggleButton);
+
+// При загрузке: если чат должен быть свёрнут — можно настроить через localStorage
+// А пока просто показываем чат, а кнопку — скрытой
+toggleButton.style.display = 'none';
+  
   </script>
-  <!-- <script>
-    const toggleBtn = document.getElementById('toggle-btn');
-    const closeBtn = document.getElementById('close-btn');
-    const editorPanel = document.getElementById('editor-panel');
-    const overlay = document.getElementById('overlay');
-    const codeEl = document.getElementById('code');
-    const outputEl = document.getElementById('output');
 
-    function updatePreview() {
-      const doc = outputEl.contentDocument || outputEl.contentWindow.document;
-      doc.open();
-      doc.write(codeEl.value);
-      doc.close();
+  <script>
+    // === 1. Создаём слой для рисования ===
+    let currentPath = []; // Будет хранить точки текущей линии
+    const myName = localStorage.getItem('livehtml_username') || 'Гость'; // Имя пользователя
+const canvas = document.createElement('canvas');
+const ctx = canvas.getContext('2d');
+const drawingsRef = db.ref('livehtml/drawings');
+// Масштабируем canvas под iframe
+function resizeCanvas() {
+  const previewRect = document.getElementById('preview').getBoundingClientRect();
+  canvas.width = previewRect.width;
+  canvas.height = previewRect.height;
+  canvas.style.cssText = `
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none; /* По умолчанию — не мешает кликам */
+    z-index: 9997;
+  `;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+document.getElementById('preview').appendChild(canvas);
+
+// === 2. Панель управления кистью ===
+// === 2. ПАНЕЛЬ УПРАВЛЕНИЯ КИСТОЙ (сворачиваемая) ===
+const toolsPanel = document.createElement('div');
+toolsPanel.id = 'drawing-tools';
+toolsPanel.style.cssText = `
+  position: fixed;
+  bottom: 35%;
+  right: 0px;
+  background: #252526;
+  border-radius: 10px;
+  padding: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-family: sans-serif;
+  font-size: 14px;
+  color: white;
+  transform: scale(1);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+`;
+
+toolsPanel.innerHTML = `
+  <div>
+    <label>Цвет:</label>
+    <input type="color" id="color-picker" value="#ff4d4d" style="margin-left: 8px;">
+  </div>
+  <div>
+    <label>Толщина:</label>
+    <input type="range" id="line-width" min="1" max="20" value="3" style="width: 100px;">
+    <span id="width-display">3px</span>
+  </div>
+  <button id="toggle-draw-mode" style="
+    background: #D63077;
+    color: white;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+  ">✏️ Рисовать</button>
+  <button id="clear-canvas" style="
+    background: #555;
+    color: white;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+  ">🗑️ Очистить</button>
+  <button id="close-tools" style="
+    background: #3a3a3a;
+    color: white;
+    border: none;
+    padding: 6px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    margin-top: 5px;
+  ">◀ Свернуть</button>
+`;
+
+// Добавляем панель, но изначально скрываем
+toolsPanel.style.display = 'none';
+document.body.appendChild(toolsPanel);
+// === КНОПКА-ИКОНКА для открытия панели ===
+const fabButton = document.createElement('button');
+fabButton.id = 'drawing-fab';
+fabButton.innerHTML = '🎨';
+fabButton.style.cssText = `
+  position: fixed;
+  bottom: 50%;
+  right: 5px;
+  transform: translateY(50%);
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: #D63077;
+  color: white;
+  font-size: 24px;
+  border: none;
+  outline: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  opacity: 1;
+`;
+
+// Показываем кнопку
+document.body.appendChild(fabButton);
+// === ОБРАБОТЧИКИ ОТКРЫТИЯ/ЗАКРЫТИЯ ПАНЕЛИ ===
+fabButton.addEventListener('click', () => {
+  toolsPanel.style.display = 'flex'; // или 'block', зависит от flex-direction
+  toolsPanel.style.opacity = '0';
+  toolsPanel.style.transform = 'scale(0.8)';
+  
+  // Анимация появления
+  setTimeout(() => {
+    toolsPanel.style.opacity = '1';
+    toolsPanel.style.transform = 'scale(1)';
+  }, 10);
+
+  fabButton.style.display = 'none';
+});
+
+// Кнопка "Свернуть" внутри панели
+document.getElementById('close-tools').addEventListener('click', () => {
+  toolsPanel.style.opacity = '0';
+  toolsPanel.style.transform = 'scale(0.8)';
+  
+  setTimeout(() => {
+    toolsPanel.style.display = 'none';
+    fabButton.style.display = 'flex'; // или 'block'
+  }, 200);
+});
+// При старте
+if (localStorage.getItem('drawingToolsOpen') === 'true') {
+  toolsPanel.style.display = 'flex';
+  fabButton.style.display = 'none';
+} else {
+  toolsPanel.style.display = 'none';
+  fabButton.style.display = 'flex';
+}
+
+// При открытии
+fabButton.addEventListener('click', () => {
+  toolsPanel.style.display = 'flex';
+  fabButton.style.display = 'none';
+  localStorage.setItem('drawingToolsOpen', 'true');
+});
+
+document.getElementById('close-tools').addEventListener('click', () => {
+  toolsPanel.style.display = 'none';
+  fabButton.style.display = 'flex';
+  localStorage.setItem('drawingToolsOpen', 'false');
+});
+// const toolsPanel = document.createElement('div');
+// toolsPanel.id = 'drawing-tools';
+// toolsPanel.style.cssText = `
+//   position: fixed;
+//   bottom: 80px;
+//   right: 20px;
+//   background: #252526;
+//   border-radius: 10px;
+//   padding: 12px;
+//   box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+//   z-index: 10000;
+//   display: flex;
+//   flex-direction: column;
+//   gap: 10px;
+//   font-family: sans-serif;
+//   font-size: 14px;
+//   color: white;
+// `;
+
+// toolsPanel.innerHTML = `
+//   <div>
+//     <label>Цвет:</label>
+//     <input type="color" id="color-picker" value="#ff4d4d" style="margin-left: 8px;">
+//   </div>
+//   <div>
+//     <label>Толщина:</label>
+//     <input type="range" id="line-width" min="1" max="20" value="3" style="width: 100px;">
+//     <span id="width-display">3px</span>
+//   </div>
+//   <button id="toggle-draw-mode" style="
+//     background: #D63077;
+//     color: white;
+//     border: none;
+//     padding: 6px 10px;
+//     border-radius: 6px;
+//     font-size: 12px;
+//     cursor: pointer;
+//   ">✏️ Рисовать</button>
+//   <button id="clear-canvas" style="
+//     background: #555;
+//     color: white;
+//     border: none;
+//     padding: 6px 10px;
+//     border-radius: 6px;
+//     font-size: 12px;
+//     cursor: pointer;
+//   ">🗑️ Очистить</button>
+// `;
+
+// document.body.appendChild(toolsPanel);
+
+// Обновление отображения толщины
+const lineWidthInput = document.getElementById('line-width');
+const widthDisplay = document.getElementById('width-display');
+widthDisplay.textContent = lineWidthInput.value + 'px';
+lineWidthInput.addEventListener('input', () => {
+  widthDisplay.textContent = lineWidthInput.value + 'px';
+});
+
+// === 3. Логика рисования ===
+let isDrawing = false;
+let lastX = 0;
+let lastY = 0;
+let drawMode = false;
+
+const colorPicker = document.getElementById('color-picker');
+const toggleDrawBtn = document.getElementById('toggle-draw-mode');
+
+// Переключение режима рисования
+toggleDrawBtn.addEventListener('click', () => {
+  drawMode = !drawMode;
+  canvas.style.pointerEvents = drawMode ? 'auto' : 'none';
+  toggleDrawBtn.textContent = drawMode ? '🛑 Рисовать' : '✏️ Рисовать';
+  document.body.style.cursor = drawMode ? 'crosshair' : 'default';
+});
+
+// Начало рисования
+canvas.addEventListener('mousedown', (e) => {
+  if (!drawMode) return;
+  isDrawing = true;
+  [lastX, lastY] = [e.offsetX, e.offsetY];
+});
+
+function pushPoint(x, y) {
+  currentPath.push({
+    x, y,
+    color: colorPicker.value,
+    width: lineWidthInput.value
+  });
+}
+
+canvas.addEventListener('mousemove', (e) => {
+  if (!isDrawing) return;
+
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+
+  // Рисуем локально
+  ctx.beginPath();
+  ctx.moveTo(lastX, lastY);
+  ctx.lineTo(x, y);
+  ctx.strokeStyle = colorPicker.value;
+  ctx.lineWidth = lineWidthInput.value;
+  ctx.lineCap = 'round';
+  ctx.stroke();
+
+  // Сохраняем предыдущую точку в буфер
+  pushPoint(lastX, lastY);
+
+  [lastX, lastY] = [x, y];
+});
+
+// canvas.addEventListener('mousemove', (e) => {
+//   if (!isDrawing) return;
+//   ctx.beginPath();
+//   ctx.moveTo(lastX, lastY);
+//   ctx.lineTo(e.offsetX, e.offsetY);
+//   ctx.strokeStyle = colorPicker.value;
+//   ctx.lineWidth = lineWidthInput.value;
+//   ctx.lineCap = 'round';
+//   ctx.stroke();
+//   [lastX, lastY] = [e.offsetX, e.offsetY];
+// });
+
+canvas.addEventListener('mouseup', () => {
+  if (currentPath.length > 1) {
+    drawingsRef.push({
+      points: currentPath,
+      // user: myName,
+      timestamp: Date.now()
+    });
+    currentPath = []; // Очищаем буфер
+  }
+  isDrawing = false;
+});
+// canvas.addEventListener('mouseup', () => {
+//   isDrawing = false;
+// });
+canvas.addEventListener('mouseout', () => {
+  isDrawing = false;
+});
+
+document.getElementById('clear-canvas').addEventListener('click', () => {
+  // if (confirm('Удалить все аннотации? Это повлияет на всех.')) {
+
+  // }
+  db.ref('livehtml/drawings').remove() // ← это удалит весь узел
+      .catch(err => {
+        alert('Ошибка при удалении');
+        console.error(err);
+      });
+});
+// === СЛУШАЕМ ВСЁ: новые линии И полную очистку ===
+drawingsRef.on('value', (snapshot) => {
+  const data = snapshot.val();
+
+  // Если данные пустые — очищаем холст
+  if (!data) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    return;
+  }
+
+  // Иначе перерисовываем все пути
+  ctx.clearRect(0, 0, canvas.width, canvas.height); // сначала чистим
+  Object.values(data).forEach(stroke => {
+    const points = stroke.points;
+    if (!points || points.length < 2) return;
+
+    const first = points[0];
+    ctx.beginPath();
+    ctx.moveTo(first.x, first.y);
+
+    for (let i = 1; i < points.length; i++) {
+      ctx.lineTo(points[i].x, points[i].y);
     }
 
-    function openEditor() {
-      editorPanel.classList.add('active');
-      overlay.classList.add('active');
-      updatePreview(); // на случай, если код изменился извне
-    }
+    ctx.strokeStyle = first.color;
+    ctx.lineWidth = first.width;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+  });
+});
 
-    function closeEditor() {
-      editorPanel.classList.remove('active');
-      overlay.classList.remove('active');
-    }
+// drawingsRef.on('child_added', (snapshot) => {
+  
+//   const data = snapshot.val();
+  
+//   const points = data.points;
 
-    toggleBtn.addEventListener('click', openEditor);
-    closeBtn.addEventListener('click', closeEditor);
-    overlay.addEventListener('click', closeEditor);
+//   if (!points || points.length < 2) return;
 
-    // Обновляем preview при вводе
-    codeEl.addEventListener('input', updatePreview);
+//   const first = points[0];
+//   ctx.beginPath();
+//   ctx.moveTo(first.x, first.y);
 
-    // Первый рендер
-    updatePreview();
-  </script> -->
+//   for (let i = 1; i < points.length; i++) {
+//     ctx.lineTo(points[i].x, points[i].y);
+//   }
+
+//   ctx.strokeStyle = first.color;
+//   ctx.lineWidth = first.width;
+//   ctx.lineCap = 'round';
+//   ctx.stroke();
+// });
+
+// drawingsRef.once('value').then(snapshot => {
+//   snapshot.forEach(childSnapshot => {
+//     const data = childSnapshot.val();
+//     const points = data.points;
+//     if (!points || points.length < 2) return;
+
+//     const first = points[0];
+//     ctx.beginPath();
+//     ctx.moveTo(first.x, first.y);
+//     for (let i = 1; i < points.length; i++) {
+//       ctx.lineTo(points[i].x, points[i].y);
+//     }
+//     ctx.strokeStyle = first.color;
+//     ctx.lineWidth = first.width;
+//     ctx.lineCap = 'round';
+//     ctx.stroke();
+//   });
+// });
+ 
+// === КНОПКА: ОЧИСТИТЬ ЧАТ (обновлённая) ===
+const clearChatBtn = document.createElement('button');
+clearChatBtn.textContent = '🗑️ Очистить чат';
+clearChatBtn.style.cssText = `
+position: fixed;
+  bottom: 10px;           /* отступ от нижнего края */
+  left: 55%;              /* позиция слева — половина ширины */
+  transform: translateX(-50%); /* сдвиг влево на половину своей ширины */
+  z-index: 9996;          /* ниже чата, но выше фона */
+
+  background: #3a3a3a;
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  transition: all 0.2s ease;
+
+  /* Минимальная ширина, но гибкая */
+  min-width: 180px;
+  white-space: nowrap;
+`;
+
+clearChatBtn.addEventListener('click', () => {
+  if (confirm('Вы уверены, что хотите очистить всю переписку? Это нельзя отменить.')) {
+    db.ref('livehtml/messages').remove()
+      .then(() => {
+        // ✅ Очищаем локальный интерфейс чата
+        const messagesBox = document.getElementById('chat-messages');
+        if (messagesBox) {
+          messagesBox.innerHTML = ''; // Удаляем все сообщения с экрана
+        }
+        console.log('✅ Переписка очищена и скрыта');
+      })
+      .catch(err => {
+        console.error('❌ Ошибка при очистке чата:', err);
+        alert('Не удалось очистить чат.');
+      });
+  }
+});
+
+document.body.appendChild(clearChatBtn);
+
+
+// // === КНОПКА: ОЧИСТИТЬ ВСЕ РИСУНКИ ===
+// const clearDrawingsBtn = document.createElement('button');
+// clearDrawingsBtn.textContent = '🎨 Очистить рисунки';
+// clearDrawingsBtn.style.cssText = `
+//   position: fixed;
+//   bottom: 105px;  /* чуть выше кнопки "Очистить чат" */
+//   right: 20px;
+//   z-index: 10000;
+//   background: #555;
+//   color: white;
+//   border: none;
+//   padding: 8px 12px;
+//   border-radius: 6px;
+//   font-size: 13px;
+//   cursor: pointer;
+//   box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+//   transition: background 0.2s;
+// `;
+
+// clearDrawingsBtn.addEventListener('click', () => {
+//   if (confirm('Вы уверены, что хотите удалить все нарисованное? Это повлияет на всех пользователей.')) {
+//     db.ref('livehtml/drawings').remove()
+//       .then(() => {
+//         // Очищаем локально
+//         const ctx = canvas.getContext('2d');
+//         ctx.clearRect(0, 0, canvas.width, canvas.height);
+//         console.log('✅ Все рисунки удалены');
+//       })
+//       .catch(err => {
+//         console.error('❌ Ошибка при удалении рисунков:', err);
+//         alert('Не удалось очистить рисунки.');
+//       });
+//   }
+// });
+
+// document.body.appendChild(clearDrawingsBtn);
+  </script>
+
 </body>
 </html>
-
