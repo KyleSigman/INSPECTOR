@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
@@ -11,7 +12,7 @@
     #pdfCanvas {
       display: block;
       border: 1px solid #000;
-      cursor: crosshair;
+      cursor: default;
     }
     #canvasContainer {
       position: relative;
@@ -22,16 +23,47 @@
       position: absolute;
       border: 2px dashed red;
       background-color: rgba(255, 0, 0, 0.1);
-      display: none;
       pointer-events: none;
+      top: 0;
+      left: 0;
     }
-    
+
+    .handle {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background: red;
+      border: 1px solid white;
+      border-radius: 50%;
+      pointer-events: auto;
+      cursor: pointer;
+    }
+    .handle.nw { top: -5px; left: -5px; cursor: nw-resize; }
+    .handle.ne { top: -5px; right: -5px; cursor: ne-resize; }
+    .handle.sw { bottom: -5px; left: -5px; cursor: sw-resize; }
+    .handle.se { bottom: -5px; right: -5px; cursor: se-resize; }
+
+    #vectorizeBtn {
+      margin-top: 15px;
+      padding: 8px 16px;
+      font-size: 16px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      display: none;
+    }
+    #vectorizeBtn:hover {
+      background: #45a049;
+    }
+
     /* Скроллбары */
-::-webkit-scrollbar {
+    ::-webkit-scrollbar {
       width: 12px;
       height: 12px;
     }
-::-webkit-scrollbar-thumb {
+    ::-webkit-scrollbar-thumb {
       background: rgb(123, 77, 214);
       border-radius: 5px;
     }
@@ -39,22 +71,51 @@
       scrollbar-width: thin;
       scrollbar-color: rgb(123, 77, 214) #f1f1f1;
     }
-    #canvasContainer {
-  position: relative;
+    #controls {
+  margin-bottom: 15px;
+}
+#controls a,
+#controls button {
   display: inline-block;
-
+  vertical-align: middle;
+  margin-right: 10px;
+}
+#vectorizeBtn {
+  padding: 6px 12px;
+  font-size: 14px;
+  background: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  display: none; /* скрыта до загрузки PDF */
+}
+#vectorizeBtn:hover {
+  background: #45a049;
 }
   </style>
 </head>
 <body>
-<p style="padding: 5px;"><a href="index.html" style="color: inherit; text-decoration: none; display: block; height: 40px; width: 40px; position: absolute; top: 0; left: 0; margin: 10px;">↩️ </a></p>
+
   <input type="file" id="pdfInput" accept=".pdf" style="display:none;">
-  <div id="drop"><a href="#" id="pdfSelect">открыть PDF</a><br>или сюда</div>
+<div id="controls">
+  <a href="#" id="pdfSelect">открыть PDF</a>
+  <button id="vectorizeBtn">Vectorize</button>
+</div>
+  <!-- <input type="file" id="pdfInput" accept=".pdf" style="display:none;">
+  <div id="drop"><a href="#" id="pdfSelect">открыть PDF</a><br>или сюда</div> -->
 
   <div id="canvasContainer">
     <canvas id="pdfCanvas"></canvas>
-    <div id="selector"></div>
+    <div id="selector">
+      <div class="handle nw"></div>
+      <div class="handle ne"></div>
+      <div class="handle sw"></div>
+      <div class="handle se"></div>
+    </div>
   </div>
+
+  <!-- <button id="vectorizeBtn">Vectorize</button> -->
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script>
@@ -67,9 +128,101 @@
     const canvas = document.getElementById('pdfCanvas');
     const ctx = canvas.getContext('2d');
     const selector = document.getElementById('selector');
-    let isSelecting = false;
-    let startX, startY;
+    const vectorizeBtn = document.getElementById('vectorizeBtn');
+    let isResizing = false;
+    let currentHandle = null;
+    let startX, startY, startLeft, startTop, startWidth, startHeight;
 
+    // Инициализация селектора после загрузки PDF
+    function initSelector() {
+      const rect = canvas.getBoundingClientRect();
+      const initW = 200;
+      const initH = 200;
+      const left = 20;   // отступ слева
+  const top = 20;    // отступ сверху
+
+      selector.style.left = left + 'px';
+      selector.style.top = top + 'px';
+      selector.style.width = initW + 'px';
+      selector.style.height = initH + 'px';
+      selector.style.display = 'block';
+      vectorizeBtn.style.display = 'inline-block';
+    }
+
+    // Обработчики ручек
+    const handles = {
+      nw: selector.querySelector('.handle.nw'),
+      ne: selector.querySelector('.handle.ne'),
+      sw: selector.querySelector('.handle.sw'),
+      se: selector.querySelector('.handle.se')
+    };
+
+    function setupResize(handleName) {
+      handles[handleName].addEventListener('mousedown', (e) => {
+        e.stopPropagation();
+        isResizing = true;
+        currentHandle = handleName;
+        startX = e.clientX;
+        startY = e.clientY;
+        startLeft = parseInt(selector.style.left) || 0;
+        startTop = parseInt(selector.style.top) || 0;
+        startWidth = parseInt(selector.style.width) || 0;
+        startHeight = parseInt(selector.style.height) || 0;
+        document.body.style.cursor = getComputedStyle(handles[handleName]).cursor;
+      });
+    }
+
+    Object.keys(handles).forEach(setupResize);
+
+    document.addEventListener('mousemove', (e) => {
+      if (!isResizing) return;
+
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+
+      let newLeft = startLeft;
+      let newTop = startTop;
+      let newWidth = startWidth;
+      let newHeight = startHeight;
+
+      switch (currentHandle) {
+        case 'se':
+          newWidth = Math.max(20, startWidth + dx);
+          newHeight = Math.max(20, startHeight + dy);
+          break;
+        case 'sw':
+          newWidth = Math.max(20, startWidth - dx);
+          newHeight = Math.max(20, startHeight + dy);
+          newLeft = startLeft + dx;
+          break;
+        case 'ne':
+          newWidth = Math.max(20, startWidth + dx);
+          newHeight = Math.max(20, startHeight - dy);
+          newTop = startTop + dy;
+          break;
+        case 'nw':
+          newWidth = Math.max(20, startWidth - dx);
+          newHeight = Math.max(20, startHeight - dy);
+          newLeft = startLeft + dx;
+          newTop = startTop + dy;
+          break;
+      }
+
+      selector.style.left = newLeft + 'px';
+      selector.style.top = newTop + 'px';
+      selector.style.width = newWidth + 'px';
+      selector.style.height = newHeight + 'px';
+    });
+
+    document.addEventListener('mouseup', () => {
+      if (isResizing) {
+        isResizing = false;
+        currentHandle = null;
+        document.body.style.cursor = '';
+      }
+    });
+
+    // Загрузка PDF
     document.getElementById('pdfSelect').addEventListener('click', (e) => {
       e.preventDefault();
       document.getElementById('pdfInput').click();
@@ -82,7 +235,8 @@
       const reader = new FileReader();
       reader.onload = async function() {
         const typedarray = new Uint8Array(this.result);
-        pdfDoc = await pdfjsLib.getDocument({data: typedarray}).promise;
+        // pdfDoc = await pdfjsLib.getDocument({ typedarray}).promise;
+        pdfDoc = await pdfjsLib.getDocument({ data: typedarray }).promise;
         const page = await pdfDoc.getPage(1);
 
         const scale = 2.0;
@@ -90,60 +244,23 @@
         canvas.width = viewport.width;
         canvas.height = viewport.height;
 
-        canvas.style.display = 'block';
-        selector.style.display = 'none';
-
         await page.render({canvasContext: ctx, viewport}).promise;
+        initSelector();
       };
       reader.readAsArrayBuffer(file);
     });
 
-    canvas.addEventListener('mousedown', function(e) {
-      const rect = canvas.getBoundingClientRect();
-      startX = e.clientX - rect.left;
-      startY = e.clientY - rect.top;
-
-      selector.style.display = 'block';
-      selector.style.left = startX + 'px';
-      selector.style.top = startY + 'px';
-      selector.style.width = '0px';
-      selector.style.height = '0px';
-
-      isSelecting = true;
-    });
-
-    canvas.addEventListener('mousemove', function(e) {
-      if (!isSelecting) return;
-      
-      const rect = canvas.getBoundingClientRect();
-      const currentX = e.clientX - rect.left;
-      const currentY = e.clientY - rect.top;
-
-      const x = Math.min(startX, currentX);
-      const y = Math.min(startY, currentY);
-      const w = Math.abs(currentX - startX);
-      const h = Math.abs(currentY - startY);
-
-      selector.style.left = x + 'px';
-      selector.style.top = y + 'px';
-      selector.style.width = w + 'px';
-      selector.style.height = h + 'px';
-    });
-
-    canvas.addEventListener('mouseup', function() {
-      if (!isSelecting) return;
-      isSelecting = false;
-
-      const width = parseInt(selector.style.width);
-      const height = parseInt(selector.style.height);
+    // Векторизация по кнопке
+    vectorizeBtn.addEventListener('click', async () => {
+      const x = parseInt(selector.style.left) || 0;
+      const y = parseInt(selector.style.top) || 0;
+      const width = parseInt(selector.style.width) || 0;
+      const height = parseInt(selector.style.height) || 0;
 
       if (width < 10 || height < 10) {
-        selector.style.display = 'none';
+        alert('Выделите область не меньше 10×10 пикселей');
         return;
       }
-
-      const x = parseInt(selector.style.left);
-      const y = parseInt(selector.style.top);
 
       const tempCanvas = document.createElement('canvas');
       tempCanvas.width = width;
@@ -155,7 +272,7 @@
       const imageData = tempCtx.getImageData(0, 0, width, height);
       const data = imageData.data;
       for (let i = 0; i < data.length; i += 4) {
-        const gray = 0.2126*data[i] + 0.7152*data[i+1] + 0.0722*data[i+2];
+        const gray = 0.2126 * data[i] + 0.7152 * data[i+1] + 0.0722 * data[i+2];
         data[i] = data[i+1] = data[i+2] = gray < 128 ? 0 : 255;
         data[i+3] = 255;
       }
@@ -188,12 +305,9 @@
               () => prompt('Скопируй:', cleanSVG)
             );
           }
-          selector.style.display = 'none';
         });
       });
     });
   </script>
 </body>
-
 </html>
-
