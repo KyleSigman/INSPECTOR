@@ -1,0 +1,197 @@
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>vectorize</title>
+  <style>
+    body {
+      margin: 30px;
+      background-color: #eee;
+      font-family: sans-serif;
+    }
+    #pdfCanvas {
+      display: block;
+      border: 1px solid #000;
+      cursor: crosshair;
+    }
+    #canvasContainer {
+      position: relative;
+      display: inline-block;
+      overflow: auto;
+    }
+    #selector {
+      position: absolute;
+      border: 2px dashed red;
+      background-color: rgba(255, 0, 0, 0.1);
+      display: none;
+      pointer-events: none;
+    }
+    
+    /* Скроллбары */
+::-webkit-scrollbar {
+      width: 12px;
+      height: 12px;
+    }
+::-webkit-scrollbar-thumb {
+      background: rgb(123, 77, 214);
+      border-radius: 5px;
+    }
+    #canvasContainer {
+      scrollbar-width: thin;
+      scrollbar-color: rgb(123, 77, 214) #f1f1f1;
+    }
+    #canvasContainer {
+  position: relative;
+  display: inline-block;
+
+}
+  </style>
+</head>
+<body>
+
+  <input type="file" id="pdfInput" accept=".pdf" style="display:none;">
+  <div id="drop"><a href="#" id="pdfSelect">открыть PDF</a><br>или сюда</div>
+
+  <div id="canvasContainer">
+    <canvas id="pdfCanvas"></canvas>
+    <div id="selector"></div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  </script>
+  <script src="potrace.js"></script>
+
+  <script>
+    let pdfDoc = null;
+    const canvas = document.getElementById('pdfCanvas');
+    const ctx = canvas.getContext('2d');
+    const selector = document.getElementById('selector');
+    let isSelecting = false;
+    let startX, startY;
+
+    document.getElementById('pdfSelect').addEventListener('click', (e) => {
+      e.preventDefault();
+      document.getElementById('pdfInput').click();
+    });
+
+    document.getElementById('pdfInput').addEventListener('change', async function(e) {
+      const file = e.target.files[0];
+      if (!file || !file.name.endsWith('.pdf')) return;
+
+      const reader = new FileReader();
+      reader.onload = async function() {
+        const typedarray = new Uint8Array(this.result);
+        pdfDoc = await pdfjsLib.getDocument({data: typedarray}).promise;
+        const page = await pdfDoc.getPage(1);
+
+        const scale = 2.0;
+        const viewport = page.getViewport({scale});
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+
+        canvas.style.display = 'block';
+        selector.style.display = 'none';
+
+        await page.render({canvasContext: ctx, viewport}).promise;
+      };
+      reader.readAsArrayBuffer(file);
+    });
+
+    canvas.addEventListener('mousedown', function(e) {
+      const rect = canvas.getBoundingClientRect();
+      startX = e.clientX - rect.left;
+      startY = e.clientY - rect.top;
+
+      selector.style.display = 'block';
+      selector.style.left = startX + 'px';
+      selector.style.top = startY + 'px';
+      selector.style.width = '0px';
+      selector.style.height = '0px';
+
+      isSelecting = true;
+    });
+
+    canvas.addEventListener('mousemove', function(e) {
+      if (!isSelecting) return;
+      
+      const rect = canvas.getBoundingClientRect();
+      const currentX = e.clientX - rect.left;
+      const currentY = e.clientY - rect.top;
+
+      const x = Math.min(startX, currentX);
+      const y = Math.min(startY, currentY);
+      const w = Math.abs(currentX - startX);
+      const h = Math.abs(currentY - startY);
+
+      selector.style.left = x + 'px';
+      selector.style.top = y + 'px';
+      selector.style.width = w + 'px';
+      selector.style.height = h + 'px';
+    });
+
+    canvas.addEventListener('mouseup', function() {
+      if (!isSelecting) return;
+      isSelecting = false;
+
+      const width = parseInt(selector.style.width);
+      const height = parseInt(selector.style.height);
+
+      if (width < 10 || height < 10) {
+        selector.style.display = 'none';
+        return;
+      }
+
+      const x = parseInt(selector.style.left);
+      const y = parseInt(selector.style.top);
+
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = width;
+      tempCanvas.height = height;
+      const tempCtx = tempCanvas.getContext('2d');
+      tempCtx.drawImage(canvas, x, y, width, height, 0, 0, width, height);
+
+      // Ч/б
+      const imageData = tempCtx.getImageData(0, 0, width, height);
+      const data = imageData.data;
+      for (let i = 0; i < data.length; i += 4) {
+        const gray = 0.2126*data[i] + 0.7152*data[i+1] + 0.0722*data[i+2];
+        data[i] = data[i+1] = data[i+2] = gray < 128 ? 0 : 255;
+        data[i+3] = 255;
+      }
+      tempCtx.putImageData(imageData, 0, 0);
+
+      // Векторизация
+      tempCanvas.toBlob(function(blob) {
+        const file = new File([blob], "region.png", {type: "image/png"});
+        Potrace.setParameter({
+          turdsize: 1,
+          turnpolicy: "minority",
+          optcurve: true,
+          alphamax: 0.6,
+          opttolerance: 0.12
+        });
+
+        Potrace.loadImageFromFile(file);
+        Potrace.process(function() {
+          const svgStr = Potrace.getSVG(1);
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(svgStr, 'image/svg+xml');
+          const path = doc.querySelector('path');
+
+          if (path) {
+            const w = doc.querySelector('svg').width.baseVal.value;
+            const h = doc.querySelector('svg').height.baseVal.value;
+            const cleanSVG = `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">${path.outerHTML}</svg>`;
+            navigator.clipboard.writeText(cleanSVG).then(
+              () => alert(`✅ SVG скопирован! (${w}×${h})`),
+              () => prompt('Скопируй:', cleanSVG)
+            );
+          }
+          selector.style.display = 'none';
+        });
+      });
+    });
+  </script>
+</body>
+</html>
