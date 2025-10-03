@@ -2,6 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>vectorize</title>
   <style>
     body {
@@ -158,69 +159,173 @@
     };
 
     function setupResize(handleName) {
-      handles[handleName].addEventListener('mousedown', (e) => {
-        e.stopPropagation();
-        isResizing = true;
-        currentHandle = handleName;
-        startX = e.clientX;
-        startY = e.clientY;
-        startLeft = parseInt(selector.style.left) || 0;
-        startTop = parseInt(selector.style.top) || 0;
-        startWidth = parseInt(selector.style.width) || 0;
-        startHeight = parseInt(selector.style.height) || 0;
-        document.body.style.cursor = getComputedStyle(handles[handleName]).cursor;
-      });
-    }
+  const handle = handles[handleName];
+
+  // Обработчик для мыши
+  handle.addEventListener('mousedown', startResize(handleName));
+  
+  // Обработчик для тач-устройств
+  handle.addEventListener('touchstart', (e) => {
+    e.preventDefault(); // предотвращаем прокрутку
+    startResize(handleName)(e.touches[0]);
+  }, { passive: false });
+}
+
+function startResize(handleName) {
+  return function(e) {
+    isResizing = true;
+    currentHandle = handleName;
+    startX = e.clientX;
+    startY = e.clientY;
+    startLeft = parseInt(selector.style.left) || 0;
+    startTop = parseInt(selector.style.top) || 0;
+    startWidth = parseInt(selector.style.width) || 0;
+    startHeight = parseInt(selector.style.height) || 0;
+    
+    const cursor = getComputedStyle(handles[handleName]).cursor;
+    document.body.style.cursor = cursor;
+    selector.style.pointerEvents = 'none'; // чтобы не мешала во время ресайза
+  };
+}
+    // function setupResize(handleName) {
+    //   handles[handleName].addEventListener('mousedown', (e) => {
+    //     e.stopPropagation();
+    //     isResizing = true;
+    //     currentHandle = handleName;
+    //     startX = e.clientX;
+    //     startY = e.clientY;
+    //     startLeft = parseInt(selector.style.left) || 0;
+    //     startTop = parseInt(selector.style.top) || 0;
+    //     startWidth = parseInt(selector.style.width) || 0;
+    //     startHeight = parseInt(selector.style.height) || 0;
+    //     document.body.style.cursor = getComputedStyle(handles[handleName]).cursor;
+    //   });
+    // }
 
     Object.keys(handles).forEach(setupResize);
 
-    document.addEventListener('mousemove', (e) => {
-      if (!isResizing) return;
+    function handleMove(e) {
+  if (!isResizing) return;
 
-      const dx = e.clientX - startX;
-      const dy = e.clientY - startY;
+  const clientX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+  const clientY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
 
-      let newLeft = startLeft;
-      let newTop = startTop;
-      let newWidth = startWidth;
-      let newHeight = startHeight;
+  const dx = clientX - startX;
+  const dy = clientY - startY;
 
-      switch (currentHandle) {
-        case 'se':
-          newWidth = Math.max(20, startWidth + dx);
-          newHeight = Math.max(20, startHeight + dy);
-          break;
-        case 'sw':
-          newWidth = Math.max(20, startWidth - dx);
-          newHeight = Math.max(20, startHeight + dy);
-          newLeft = startLeft + dx;
-          break;
-        case 'ne':
-          newWidth = Math.max(20, startWidth + dx);
-          newHeight = Math.max(20, startHeight - dy);
-          newTop = startTop + dy;
-          break;
-        case 'nw':
-          newWidth = Math.max(20, startWidth - dx);
-          newHeight = Math.max(20, startHeight - dy);
-          newLeft = startLeft + dx;
-          newTop = startTop + dy;
-          break;
-      }
+  let newLeft = startLeft;
+  let newTop = startTop;
+  let newWidth = startWidth;
+  let newHeight = startHeight;
 
-      selector.style.left = newLeft + 'px';
-      selector.style.top = newTop + 'px';
-      selector.style.width = newWidth + 'px';
-      selector.style.height = newHeight + 'px';
-    });
+  switch (currentHandle) {
+    case 'se':
+      newWidth = Math.max(20, startWidth + dx);
+      newHeight = Math.max(20, startHeight + dy);
+      break;
+    case 'sw':
+      newWidth = Math.max(20, startWidth - dx);
+      newHeight = Math.max(20, startHeight + dy);
+      newLeft = startLeft + dx;
+      break;
+    case 'ne':
+      newWidth = Math.max(20, startWidth + dx);
+      newHeight = Math.max(20, startHeight - dy);
+      newTop = startTop + dy;
+      break;
+    case 'nw':
+      newWidth = Math.max(20, startWidth - dx);
+      newHeight = Math.max(20, startHeight - dy);
+      newLeft = startLeft + dx;
+      newTop = startTop + dy;
+      break;
+  }
 
-    document.addEventListener('mouseup', () => {
-      if (isResizing) {
-        isResizing = false;
-        currentHandle = null;
-        document.body.style.cursor = '';
-      }
-    });
+  selector.style.left = newLeft + 'px';
+  selector.style.top = newTop + 'px';
+  selector.style.width = newWidth + 'px';
+  selector.style.height = newHeight + 'px';
+}
+
+// Для мыши
+document.addEventListener('mousemove', handleMove);
+document.addEventListener('mouseup', () => {
+  if (isResizing) {
+    isResizing = false;
+    currentHandle = null;
+    document.body.style.cursor = '';
+    selector.style.pointerEvents = 'auto';
+  }
+});
+
+// Для тач-устройств
+document.addEventListener('touchmove', handleMove, { passive: false });
+document.addEventListener('touchend', () => {
+  if (isResizing) {
+    isResizing = false;
+    currentHandle = null;
+    selector.style.pointerEvents = 'auto';
+  }
+});
+    // document.addEventListener('mousemove', (e) => {
+    //   if (!isResizing) return;
+
+    //   const dx = e.clientX - startX;
+    //   const dy = e.clientY - startY;
+
+    //   let newLeft = startLeft;
+    //   let newTop = startTop;
+    //   let newWidth = startWidth;
+    //   let newHeight = startHeight;
+
+    //   switch (currentHandle) {
+    //     case 'se':
+    //       newWidth = Math.max(20, startWidth + dx);
+    //       newHeight = Math.max(20, startHeight + dy);
+    //       break;
+    //     case 'sw':
+    //       newWidth = Math.max(20, startWidth - dx);
+    //       newHeight = Math.max(20, startHeight + dy);
+    //       newLeft = startLeft + dx;
+    //       break;
+    //     case 'ne':
+    //       newWidth = Math.max(20, startWidth + dx);
+    //       newHeight = Math.max(20, startHeight - dy);
+    //       newTop = startTop + dy;
+    //       break;
+    //     case 'nw':
+    //       newWidth = Math.max(20, startWidth - dx);
+    //       newHeight = Math.max(20, startHeight - dy);
+    //       newLeft = startLeft + dx;
+    //       newTop = startTop + dy;
+    //       break;
+    //   }
+
+    //   selector.style.left = newLeft + 'px';
+    //   selector.style.top = newTop + 'px';
+    //   selector.style.width = newWidth + 'px';
+    //   selector.style.height = newHeight + 'px';
+    // });
+
+    function stopResize() {
+  if (isResizing) {
+    isResizing = false;
+    currentHandle = null;
+    document.body.style.cursor = '';
+    selector.style.pointerEvents = 'auto';
+  }
+}
+
+document.addEventListener('mouseup', stopResize);
+document.addEventListener('touchend', stopResize);
+
+    // document.addEventListener('mouseup', () => {
+    //   if (isResizing) {
+    //     isResizing = false;
+    //     currentHandle = null;
+    //     document.body.style.cursor = '';
+    //   }
+    // });
 
     // Загрузка PDF
     document.getElementById('pdfSelect').addEventListener('click', (e) => {
