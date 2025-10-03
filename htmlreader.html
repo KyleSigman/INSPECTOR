@@ -1181,6 +1181,74 @@ document.body.appendChild(clearChatBtn);
 
 // document.body.appendChild(clearDrawingsBtn);
   </script>
+<script>
+  // Убедимся, что DOM загружен
+  document.addEventListener('DOMContentLoaded', () => {
+    const codeEl = document.getElementById('code');
+    const editorHeader = document.getElementById('editor-header');
+    const closeBtn = document.getElementById('close-btn');
 
+    if (!editorHeader || !closeBtn || !codeEl) return;
+
+    // === Кнопка: Выделить всё ===
+    const selectAllBtn = document.createElement('button');
+    selectAllBtn.title = 'Выделить весь код';
+    selectAllBtn.textContent = '⇤'; // или '📋', 'Ⓐ', '✓'
+    selectAllBtn.style.cssText = `
+      width: 26px;
+      height: 26px;
+      border: none;
+      background: transparent;
+      color: #aaa;
+      font-size: 14px;
+      cursor: pointer;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 4px;
+    `;
+    selectAllBtn.addEventListener('click', () => {
+      codeEl.focus();
+      codeEl.select(); // Только выделяет — не копирует!
+    });
+
+    // === Кнопка: Очистить всё ===
+    const clearAllBtn = document.createElement('button');
+    clearAllBtn.title = 'Очистить код';
+    clearAllBtn.textContent = '🗑';
+    clearAllBtn.style.cssText = `
+      width: 26px;
+      height: 26px;
+      border: none;
+      background: transparent;
+      color: #ff6b6b;
+      font-size: 14px;
+      cursor: pointer;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 4px;
+    `;
+    clearAllBtn.addEventListener('click', () => {
+      if (confirm('Очистить весь код?')) {
+        codeEl.value = '';
+        codeEl.focus();
+        updatePreview();
+        // Отправляем пустоту в Firebase (если используется)
+        if (typeof codeRef !== 'undefined') {
+          clearTimeout(timeoutId);
+          codeRef.set('');
+        }
+      }
+    });
+
+    // Вставляем кнопки ПЕРЕД кнопкой закрытия
+    editorHeader.insertBefore(selectAllBtn, closeBtn);
+    editorHeader.insertBefore(clearAllBtn, closeBtn);
+  });
+</script>
 </body>
 </html>
+
