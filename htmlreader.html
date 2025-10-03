@@ -689,6 +689,7 @@ resizeCanvas();
 window.addEventListener('resize', resizeCanvas);
 
 document.getElementById('preview').appendChild(canvas);
+canvas.style.touchAction = 'none';
 
 // === 2. Панель управления кистью ===
 // === 2. ПАНЕЛЬ УПРАВЛЕНИЯ КИСТОЙ (сворачиваемая) ===
@@ -907,70 +908,91 @@ toggleDrawBtn.addEventListener('click', () => {
   document.body.style.cursor = drawMode ? 'crosshair' : 'default';
 });
 
-// Универсальная функция получения координат
-function getCoords(e) {
-  const rect = canvas.getBoundingClientRect();
-  let x, y;
-
-  if (e.type.startsWith('touch')) {
-    const touch = e.touches[0] || e.changedTouches[0];
-    x = touch.clientX - rect.left;
-    y = touch.clientY - rect.top;
-  } else {
-    x = e.clientX - rect.left;
-    y = e.clientY - rect.top;
-  }
-
-  return { x, y };
-}
-
-// === Обработчики для мыши ===
+// Начало рисования
 canvas.addEventListener('mousedown', (e) => {
   if (!drawMode) return;
   isDrawing = true;
-  const { x, y } = getCoords(e);
-  [lastX, lastY] = [x, y];
-  e.preventDefault(); // предотвращает выделение и т.п.
+  [lastX, lastY] = [e.offsetX, e.offsetY];
 });
+
+function pushPoint(x, y) {
+  currentPath.push({
+    x, y,
+    color: colorPicker.value,
+    width: lineWidthInput.value
+  });
+}
 
 canvas.addEventListener('mousemove', (e) => {
   if (!isDrawing) return;
-  const { x, y } = getCoords(e);
-  drawSegment(x, y);
+
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+
+  // Рисуем локально
+  ctx.beginPath();
+  ctx.moveTo(lastX, lastY);
+  ctx.lineTo(x, y);
+  ctx.strokeStyle = colorPicker.value;
+  ctx.lineWidth = lineWidthInput.value;
+  ctx.lineCap = 'round';
+  ctx.stroke();
+
+  // Сохраняем предыдущую точку в буфер
+  pushPoint(lastX, lastY);
+
   [lastX, lastY] = [x, y];
-  e.preventDefault();
 });
 
+// canvas.addEventListener('mousemove', (e) => {
+//   if (!isDrawing) return;
+//   ctx.beginPath();
+//   ctx.moveTo(lastX, lastY);
+//   ctx.lineTo(e.offsetX, e.offsetY);
+//   ctx.strokeStyle = colorPicker.value;
+//   ctx.lineWidth = lineWidthInput.value;
+//   ctx.lineCap = 'round';
+//   ctx.stroke();
+//   [lastX, lastY] = [e.offsetX, e.offsetY];
+// });
+
 canvas.addEventListener('mouseup', () => {
-  finishDrawing();
+  if (currentPath.length > 1) {
+    drawingsRef.push({
+      points: currentPath,
+      // user: myName,
+      timestamp: Date.now()
+    });
+    currentPath = []; // Очищаем буфер
+  }
+  isDrawing = false;
 });
+// canvas.addEventListener('mouseup', () => {
+//   isDrawing = false;
+// });
 canvas.addEventListener('mouseout', () => {
   isDrawing = false;
 });
 
-// === Обработчики для тач-устройств ===
+// --- TOUCH SUPPORT (без изменений логики) ---
 canvas.addEventListener('touchstart', (e) => {
   if (!drawMode) return;
   isDrawing = true;
-  const { x, y } = getCoords(e);
-  [lastX, lastY] = [x, y];
-  e.preventDefault(); // ОБЯЗАТЕЛЬНО — иначе прокрутка страницы мешает
+  const rect = canvas.getBoundingClientRect();
+  const touch = e.touches[0];
+  lastX = touch.clientX - rect.left;
+  lastY = touch.clientY - rect.top;
+  e.preventDefault();
 });
 
 canvas.addEventListener('touchmove', (e) => {
   if (!isDrawing) return;
-  const { x, y } = getCoords(e);
-  drawSegment(x, y);
-  [lastX, lastY] = [x, y];
-  e.preventDefault(); // ОБЯЗАТЕЛЬНО — отключает прокрутку при рисовании
-});
+  const rect = canvas.getBoundingClientRect();
+  const touch = e.touches[0];
+  const x = touch.clientX - rect.left;
+  const y = touch.clientY - rect.top;
 
-canvas.addEventListener('touchend', () => {
-  finishDrawing();
-});
-
-// Вынесем логику рисования в функцию
-function drawSegment(x, y) {
   ctx.beginPath();
   ctx.moveTo(lastX, lastY);
   ctx.lineTo(x, y);
@@ -980,18 +1002,18 @@ function drawSegment(x, y) {
   ctx.stroke();
 
   pushPoint(lastX, lastY);
-}
+  [lastX, lastY] = [x, y];
 
-function finishDrawing() {
+  e.preventDefault();
+});
+
+canvas.addEventListener('touchend', () => {
   if (currentPath.length > 1) {
-    drawingsRef.push({
-      points: currentPath,
-      timestamp: Date.now()
-    });
+    drawingsRef.push({ points: currentPath, timestamp: Date.now() });
     currentPath = [];
   }
   isDrawing = false;
-}
+});
 
 document.getElementById('clear-canvas').addEventListener('click', () => {
   // if (confirm('Удалить все аннотации? Это повлияет на всех.')) {
@@ -1162,4 +1184,3 @@ document.body.appendChild(clearChatBtn);
 
 </body>
 </html>
-
