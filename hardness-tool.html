@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Таблица твёрдости — поиск и график</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --text: #333333;
+      --table-bg: #ffffff;
+      --header-bg: #e8e8e8;
+      --row-even: #f6f6f6;
+      --row-odd: #ffffff;
+      --highlight: #d4edda;
+      --border: #ddd;
+      --input-bg: #fff;
+      --input-border: #ccc;
+      --card-bg: #f8f9fa;
+      --card-border: #cfd4d9;
+    }
+
+    .dark-theme {
+      --bg: #1e1e1e;
+      --text: #e0e0e0;
+      --table-bg: #252526;
+      --header-bg: #3c3c3c;
+      --row-even: #2d2d30;
+      --row-odd: #252526;
+      --highlight: #2c4a33;
+      --border: #444;
+      --input-bg: #333;
+      --input-border: #555;
+      --card-bg: #2d2d30;
+      --card-border: #444;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      padding: 16px;
+      margin: 0;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 1.4em;
+      margin-bottom: 16px;
+      font-weight: normal;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+      margin-bottom: 16px;
+      align-items: center;
+    }
+
+    .search-group {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    input[type="number"] {
+      padding: 6px 10px;
+      border: 1px solid var(--input-border);
+      border-radius: 4px;
+      background: var(--input-bg);
+      color: var(--text);
+      width: 90px;
+    }
+
+    select {
+      padding: 6px 10px;
+      border: 1px solid var(--input-border);
+      border-radius: 4px;
+      background: var(--input-bg);
+      color: var(--text);
+    }
+
+    button {
+      padding: 6px 12px;
+      border: 1px solid var(--border);
+      background: var(--table-bg);
+      color: var(--text);
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.9em;
+    }
+
+    button:hover {
+      background: var(--header-bg);
+    }
+
+    .view-toggle {
+      margin-left: auto;
+    }
+
+    .result-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 6px;
+      padding: 14px;
+      margin: 16px auto;
+      max-width: 800px;
+      display: none;
+      font-size: 0.95em;
+      line-height: 1.5;
+    }
+
+    .result-card.show {
+      display: block;
+    }
+
+    .result-card h3 {
+      margin-top: 0;
+      color: var(--text);
+    }
+
+    .result-card .match {
+      margin: 8px 0;
+      padding: 8px;
+      background: rgba(44, 123, 182, 0.1);
+      border-radius: 4px;
+    }
+
+    .result-card .interpolated {
+      margin-top: 12px;
+      padding: 10px;
+      background: rgba(215, 25, 28, 0.1);
+      border-radius: 4px;
+      font-weight: bold;
+    }
+
+    .show-in-table {
+      display: inline-block;
+      margin-top: 12px;
+      color: #1a73e8;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+
+    .table-container, .chart-container {
+      display: none;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .table-view .table-container { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; }
+    .chart-view .chart-container { display: block; text-align: center; }
+
+    table {
+      width: 100%;
+      max-width: 480px;
+      border-collapse: collapse;
+      background: var(--table-bg);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    th, td {
+      padding: 8px;
+      text-align: center;
+      border: 1px solid var(--border);
+      font-size: 0.92em;
+    }
+
+    th {
+      background-color: var(--header-bg);
+      position: relative;
+    }
+
+    .tooltip {
+      visibility: hidden;
+      width: 180px;
+      background-color: #333;
+      color: #fff;
+      text-align: center;
+      border-radius: 4px;
+      padding: 6px;
+      position: absolute;
+      z-index: 1;
+      bottom: 125%;
+      left: 50%;
+      transform: translateX(-50%);
+      opacity: 0;
+      transition: opacity 0.3s;
+      font-size: 0.85em;
+    }
+
+    th:hover .tooltip {
+      visibility: visible;
+      opacity: 1;
+    }
+
+    tbody tr.highlight {
+      background-color: var(--highlight) !important;
+    }
+
+    tbody tr:nth-child(even) { background-color: var(--row-even); }
+    tbody tr:nth-child(odd) { background-color: var(--row-odd); }
+
+    canvas {
+      max-width: 100%;
+      background: var(--table-bg);
+      border-radius: 4px;
+      padding: 10px;
+    }
+
+    @media (max-width: 1000px) {
+      .table-container {
+        flex-direction: column;
+        align-items: center;
+      }
+    }
+  </style>
+</head>
+<body class="table-view">
+
+  <h1>Соответствие твёрдости по методам Бринелля, Роквелла, Виккерса</h1>
+  <p style="padding: 5px;"><a href="index.html" style="color: inherit; text-decoration: none; display: block; height: 40px; width: 40px; position: absolute; top: 0; left: 0; margin: 10px;">↩️ </a></p>
+  <div class="controls">
+    <div class="search-group">
+      <label>Найти:</label>
+      <input type="number" id="searchInput" step="1" placeholder="Напр. 305">
+      <select id="searchField">
+        <option value="all">Во всех полях</option>
+        <option value="HB">Только HB</option>
+        <option value="HV">Только HV</option>
+        <option value="HR_C">Только HR C</option>
+        <option value="HR_A">Только HR A</option>
+      </select>
+      <button onclick="searchTable()">Найти</button>
+      <button onclick="clearHighlight()">Сброс</button>
+    </div>
+    <div class="view-toggle">
+      <button onclick="switchView('table')">Таблица</button>
+      <button onclick="switchView('chart')">График</button>
+      <button onclick="toggleTheme()">🌙/☀️</button>
+    </div>
+  </div>
+
+  <div class="result-card" id="resultCard"></div>
+
+  <!-- ТАБЛИЦА -->
+  <div class="table-container">
+    <table id="leftTable">
+      <thead><tr>
+        <th>Диаметр, мм<span class="tooltip">Диаметр отпечатка при испытании по Бринеллю</span></th>
+        <th>HB<span class="tooltip">Твёрдость по Бринеллю</span></th>
+        <th>HR C<span class="tooltip">Роквелл, шкала C (алмазный конус)</span></th>
+        <th>HR A<span class="tooltip">Роквелл, шкала A (алмазный конус, меньшая нагрузка)</span></th>
+        <th>HV<span class="tooltip">Твёрдость по Виккерсу</span></th>
+      </tr></thead>
+      <tbody id="leftBody"></tbody>
+    </table>
+    <table id="rightTable">
+      <thead><tr>
+        <th>Диаметр, мм<span class="tooltip">Диаметр отпечатка при испытании по Бринеллю</span></th>
+        <th>HB<span class="tooltip">Твёрдость по Бринеллю</span></th>
+        <th>HR C<span class="tooltip">Роквелл, шкала C</span></th>
+        <th>HR A<span class="tooltip">Роквелл, шкала A</span></th>
+        <th>HV<span class="tooltip">Твёрдость по Виккерсу</span></th>
+      </tr></thead>
+      <tbody id="rightBody"></tbody>
+    </table>
+  </div>
+
+  <!-- ГРАФИК -->
+  <div class="chart-container">
+    <canvas id="hardnessChart" width="800" height="800"></canvas>
+  </div>
+
+  <script>
+    // === ДАННЫЕ ===
+    const rawData = {
+      left: [
+        [2.20,780,72,89,1224],[2.25,745,70,87,1116],[2.30,712,68,86,1022],[2.35,682,66,85,941],
+        [2.40,653,64,84,868],[2.45,627,62,83,804],[2.50,601,60,82,746],[2.55,578,58,81,694],
+        [2.60,555,56,79,649],[2.65,534,54,78,606],[2.70,514,52,77,587],[2.75,495,50,76,551],
+        [2.80,477,49,76,534],[2.85,461,48,75,502],[2.90,444,46,74,473],[2.95,429,45,73,460],
+        [3.00,415,44,72,435],[3.02,409,43,72,423],[3.05,401,42,71,412],[3.10,388,41,71,401],
+        [3.15,375,40,70,390],[3.20,363,39,70,380],[3.25,352,38,69,361],[3.30,341,37,68,344],
+        [3.35,334,36,68,335],[3.40,321,35,57,320],[3.45,311,34,67,312],[3.50,302,33,67,305],
+        [3.55,293,31,66,291],[3.60,286,30,66,285],[3.65,277,29,65,278],[3.70,269,28,65,272],
+        [3.75,262,27,64,261],[3.80,255,26,64,255],[3.85,248,25,63,250],[3.90,241,24,63,240]
+      ],
+      right: [
+        [3.95,235,23,62,235],[4.00,228,22,62,226],[4.05,223,21,61,221],[4.10,217,20,61,217],
+        [4.15,212,19,60,213],[4.20,207,18,60,209],[4.25,202,16,59,204],[4.30,196,15,58,197],
+        [4.35,192,15,58,190],[4.40,187,null,57,186],[4.45,183,null,56,183],[4.50,179,null,56,177],
+        [4.55,174,null,55,174],[4.60,170,null,null,171],[4.65,166,null,null,165],[4.70,163,null,null,162],
+        [4.75,159,null,null,159],[4.80,156,null,null,154],[4.85,153,null,null,152],[4.90,149,null,null,149],
+        [4.95,146,null,null,147],[5.00,143,null,null,144],[5.05,140,null,null,null],[5.10,137,null,null,null],
+        [5.15,134,null,null,null],[5.20,131,null,null,null],[5.25,128,null,null,null],[5.30,126,null,null,null],
+        [5.35,124,null,null,null],[5.40,121,null,null,null],[5.45,118,null,null,null],[5.50,116,null,null,null],
+        [5.55,114,null,null,null],[5.60,112,null,null,null],[5.65,109,null,null,null]
+      ]
+    };
+
+    // Преобразуем в объекты
+    const allRows = [];
+    rawData.left.forEach(row => {
+      allRows.push({ block: 'left', d: row[0], HB: row[1], HR_C: row[2], HR_A: row[3], HV: row[4] });
+    });
+    rawData.right.forEach(row => {
+      allRows.push({ block: 'right', d: row[0], HB: row[1], HR_C: row[2], HR_A: row[3], HV: row[4] });
+    });
+
+    // === ИНИЦИАЛИЗАЦИЯ ТАБЛИЦ ===
+    function renderTables() {
+      const leftBody = document.getElementById('leftBody');
+      const rightBody = document.getElementById('rightBody');
+
+      leftBody.innerHTML = rawData.left.map(row => 
+        `<tr data-index="${allRows.findIndex(r => r.d === row[0] && r.HB === row[1])}">
+          <td>${row[0]}</td><td>${row[1]}</td><td>${row[2] ?? '—'}</td><td>${row[3] ?? '—'}</td><td>${row[4] ?? '—'}</td>
+        </tr>`
+      ).join('');
+
+      rightBody.innerHTML = rawData.right.map(row => 
+        `<tr data-index="${allRows.findIndex(r => r.d === row[0] && r.HB === row[1])}">
+          <td>${row[0]}</td><td>${row[1]}</td><td>${row[2] ?? '—'}</td><td>${row[3] ?? '—'}</td><td>${row[4] ?? '—'}</td>
+        </tr>`
+      ).join('');
+    }
+
+    // === ПОИСК ===
+    let lastFoundIndex = null;
+
+    function searchTable() {
+      const value = parseFloat(document.getElementById('searchInput').value);
+      const field = document.getElementById('searchField').value;
+      if (isNaN(value)) {
+        showResultCard('Введите корректное число');
+        return;
+      }
+
+      clearHighlight();
+      let exactMatches = [];
+      let closest = null;
+      let minDiff = Infinity;
+
+      const fieldsToCheck = field === 'all' 
+        ? ['HB', 'HV', 'HR_C', 'HR_A'] 
+        : [field];
+
+      allRows.forEach((row, index) => {
+        let matched = false;
+        fieldsToCheck.forEach(f => {
+          const val = row[f];
+          if (val !== null && val !== undefined && val === value) {
+            exactMatches.push({ ...row, index });
+            matched = true;
+          }
+          if (val !== null && val !== undefined) {
+            const diff = Math.abs(val - value);
+            if (diff < minDiff && diff <= 2) {
+              minDiff = diff;
+              closest = { ...row, diff, field: f, index };
+            }
+          }
+        });
+        if (matched) {
+          // Подсветка
+          const tr = document.querySelector(`tr[data-index="${index}"]`);
+          if (tr) tr.classList.add('highlight');
+        }
+      });
+
+      // Карточка
+      let html = `<h3>🔍 Запрос: ${value} (${field === 'all' ? 'все поля' : field})</h3>`;
+
+      if (exactMatches.length > 0) {
+        html += `<p>✅ Точное совпадение найдено:</p>`;
+        exactMatches.forEach(match => {
+          html += `
+            <div class="match">
+              <strong>HB = ${match.HB}</strong>, 
+              HV = ${match.HV ?? '—'}, 
+              HR C = ${match.HR_C ?? '—'}, 
+              HR A = ${match.HR_A ?? '—'}, 
+              диаметр = ${match.d} мм
+            </div>
+          `;
+        });
+        lastFoundIndex = exactMatches[0].index;
+        html += `<div class="show-in-table" onclick="scrollToRow(${lastFoundIndex})">Показать в таблице</div>`;
+      } else {
+        html += `<p>❌ Точное совпадение не найдено.</p>`;
+        if (closest && minDiff <= 2) {
+          html += `<p>📏 Ближайшее значение:</p>`;
+          html += `
+            <div class="match">
+              <strong>HB = ${closest.HB}</strong>, 
+              HV = ${closest.HV ?? '—'}, 
+              HR C = ${closest.HR_C ?? '—'}, 
+              HR A = ${closest.HR_A ?? '—'}, 
+              диаметр = ${closest.d} мм<br>
+              (разница: ${minDiff.toFixed(1)} в поле ${closest.field})
+            </div>
+          `;
+          lastFoundIndex = closest.index;
+          html += `<div class="show-in-table" onclick="scrollToRow(${lastFoundIndex})">Показать в таблице</div>`;
+        }
+      }
+
+      showResultCard(html);
+    }
+
+    function scrollToRow(index) {
+      const tr = document.querySelector(`tr[data-index="${index}"]`);
+      if (tr) {
+        // Переключаемся на таблицу, если были в графике
+        if (!document.body.classList.contains('table-view')) {
+          switchView('table');
+        }
+        setTimeout(() => {
+          tr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          // Добавим временную анимацию для акцента
+          tr.style.transition = 'box-shadow 0.6s';
+          tr.style.boxShadow = '0 0 0 2px #2c7bb6';
+          setTimeout(() => { tr.style.boxShadow = ''; }, 1000);
+        }, 300);
+      }
+    }
+
+    function showResultCard(html) {
+      const card = document.getElementById('resultCard');
+      card.innerHTML = html;
+      card.classList.add('show');
+    }
+
+    function clearHighlight() {
+      document.querySelectorAll('tbody tr').forEach(tr => {
+        tr.classList.remove('highlight');
+        tr.style.boxShadow = '';
+      });
+      document.getElementById('resultCard').classList.remove('show');
+      lastFoundIndex = null;
+    }
+
+    // === ПЕРЕКЛЮЧЕНИЕ ВИДА ===
+    function switchView(mode) {
+      document.body.className = mode + '-view';
+      if (mode === 'chart') {
+        renderChart();
+      }
+    }
+
+    // === ГРАФИК (квадратный!) ===
+    let chartInstance = null;
+    function renderChart() {
+      const ctx = document.getElementById('hardnessChart').getContext('2d');
+      
+      const diameters = allRows.map(r => r.d);
+      const hbValues = allRows.map(r => r.HB);
+      const hvValues = allRows.map(r => r.HV);
+
+      if (chartInstance) {
+        chartInstance.destroy();
+      }
+
+      chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: diameters,
+          datasets: [
+            {
+              label: 'HB (Бринелль)',
+              data: hbValues,
+              borderColor: '#2c7bb6',
+              backgroundColor: 'rgba(44,123,182,0.1)',
+              tension: 0.3,
+              pointRadius: 2
+            },
+            {
+              label: 'HV (Виккерс)',
+              data: hvValues,
+              borderColor: '#d7191c',
+              backgroundColor: 'rgba(215,25,28,0.1)',
+              tension: 0.3,
+              pointRadius: 2
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            title: {
+              display: true,
+              text: 'Зависимость твёрдости от диаметра отпечатка',
+              color: getComputedStyle(document.body).getPropertyValue('--text')
+            },
+            legend: {
+              labels: {
+                color: getComputedStyle(document.body).getPropertyValue('--text')
+              }
+            }
+          },
+          scales: {
+            x: {
+              title: { display: true, text: 'Диаметр отпечатка, мм', color: getComputedStyle(document.body).getPropertyValue('--text') },
+              ticks: { color: getComputedStyle(document.body).getPropertyValue('--text') },
+              grid: { color: getComputedStyle(document.body).getPropertyValue('--border') }
+            },
+            y: {
+              title: { display: true, text: 'Число твёрдости', color: getComputedStyle(document.body).getPropertyValue('--text') },
+              ticks: { color: getComputedStyle(document.body).getPropertyValue('--text') },
+              grid: { color: getComputedStyle(document.body).getPropertyValue('--border') }
+            }
+          }
+        }
+      });
+    }
+
+    // === ТЕМА ===
+    function toggleTheme() {
+      document.body.classList.toggle('dark-theme');
+      if (document.body.className.includes('chart-view') && chartInstance) {
+        setTimeout(renderChart, 100);
+      }
+    }
+
+    // === ЗАПУСК ===
+    renderTables();
+  </script>
+</body>
+</html>
