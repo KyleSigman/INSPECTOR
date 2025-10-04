@@ -35,12 +35,14 @@
       white-space: nowrap;
       z-index: 10;
       transform: translateY(-100%);
+      display: none;
     }
     .line-label {
       background: rgba(255, 0, 0, 0.7) !important;
       border-color: black !important;
       color: white !important;
       font-weight: bold;
+      display: none;
     }
     pre {
       background: #1e1e1e;
@@ -203,6 +205,36 @@ h2
       margin: 5px;
     }
   </style>
+  <style>
+    .copy-notification {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #28a745;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-family: Arial, sans-serif;
+      font-size: 16px;
+      font-weight: bold;
+      z-index: 10000;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      opacity: 0;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    .copy-notification.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+  <style>
+    #pdfFile 
+    {
+      padding: 6px; background-color: white; border: none; outline: 1px solid rgba(0, 0, 0, 0.159); border-radius: 5px;
+
+    }
+  </style>
 </head>
 <body>
   <div class="container">
@@ -212,7 +244,7 @@ h2
       <input type="file" id="pdfFile" accept="application/pdf" />
 <div class="buttons">
   <button id="loadBtn">Загрузить</button>
-  <button id="detectLinesBtn" disabled>🔍 Анализ</button>
+  <button id="detectLinesBtn" disabled>Нормализация</button>
 </div>
       <div id="status">Выберите PDF...</div>
     </div>
@@ -246,13 +278,13 @@ h2
       <div id="searchResult"></div>
     </div> -->
 
-    <div class="buttonspannel" style="display: block; outline: 2px solid black; padding: 10px;">
-      <button id="showHtmlBtn">👀 Показать html</button>
-      <button id="copyHtmlBtn">📋 Копировать</button>
+    <div class="buttonspannel" style="display: block; padding: 10px; border-radius: 5px; background-color: white; box-shadow: 0 0 5px rgba(0, 0, 0, 0.122);">
+      <button id="showHtmlBtn">👀 Предпросмотр</button>
+      <button id="copyHtmlBtn" style="display: none;">📋 Копировать</button>
       <button id="enableSelectMode">Выделить</button>
-      <button id="regionModeBtn">Регион</button>
-      <button id="exportRegionsBtn">Экспорт регионов</button>
-      <button id="exportFullHtmlBtn">Полный клон</button>
+      <button id="regionModeBtn" style="display: none;">Регион</button>
+      <button id="exportRegionsBtn" style="display: none;">Экспорт регионов</button>
+      <button id="exportFullHtmlBtn">📋 Копировать</button>
       <!-- <button id="exportTableJsonBtn">📊 Экспорт структуры таблицы (JSON)</button> -->
     </div>
 
@@ -315,7 +347,7 @@ font-size: 18px; z-index: 9999;
 <!-- Панель умной клетки (изначально скрыта) -->
 <div id="smartCellPanel" style="
 position: fixed; top: 10px; left: 1%;
-width: 86%; max-width: 500px;
+width: 80%; max-width: 400px;
 background: white; padding: 16px; border-radius: 12px; 
 box-shadow: 0 4px 20px rgba(0,0,0,0.25); 
 z-index: 2000; font-size: 14px;
@@ -325,7 +357,7 @@ display: none; /* скрыта по умолчанию */
 <select id="smartCellSelect" style="width: 100%; margin-top: 6px; padding: 6px; font-size: 14px;"></select>
 
 <!-- Кнопки в два столбца: Лево/Право слева, Вверх/Вниз справа -->
-<div style="margin-top: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+<div style="margin-top: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 6px;max-width: 200px;">
   <!-- Левый столбец: ← → -->
   <div style="display: flex; flex-direction: column; gap: 6px;">
     <button id="smartUp" style="height: 40px;">↑</button>
@@ -733,72 +765,169 @@ document.getElementById('searchInput').oninput = () => {
     });
   }
 
-  // === 5. Перерисовка PDF и отрисовка линий ===
-  await currentPage.render({ canvasContext: ctx, viewport }).promise;
+  // // === 5. Перерисовка PDF и отрисовка линий ===
+  // await currentPage.render({ canvasContext: ctx, viewport }).promise;
 
-  // Зелёные (этажи)
-  ctx.strokeStyle = '#00ff00';
-  ctx.lineWidth = 2;
-  floorLines.forEach(line => {
+  // // Зелёные (этажи)
+  // ctx.strokeStyle = '#00ff00';
+  // ctx.lineWidth = 2;
+  // floorLines.forEach(line => {
+  //   ctx.beginPath();
+  //   ctx.moveTo(line.startX, line.y);
+  //   ctx.lineTo(line.endX, line.y);
+  //   ctx.stroke();
+  //   const label = document.createElement('div');
+  //   label.className = 'debug-label line-label';
+  //   label.textContent = `Y=${Math.round(line.y)}`;
+  //   label.style.left = `${line.startX + 10}px`;
+  //   label.style.top = `${line.y}px`;
+  //   document.getElementById('canvasContainer').appendChild(label);
+  // });
+
+  // // Оранжевые (субэтапы)
+  // ctx.strokeStyle = '#ff9800';
+  // ctx.lineWidth = 1;
+  // substageLines.forEach(line => {
+  //   // Исключаем фрагменты зелёных линий (по Y)
+  //   const isOverlappingGreen = floorLines.some(green => Math.abs(green.y - line.y) <= 2);
+  //   if (isOverlappingGreen) return;
+
+  //   ctx.beginPath();
+  //   ctx.moveTo(line.startX, line.y);
+  //   ctx.lineTo(line.endX, line.y);
+  //   ctx.stroke();
+  //   const label = document.createElement('div');
+  //   label.className = 'debug-label line-label';
+  //   label.textContent = `sub Y=${Math.round(line.y)}`;
+  //   label.style.left = `${line.startX + 10}px`;
+  //   label.style.top = `${line.y}px`;
+  //   label.style.background = 'rgba(255, 152, 0, 0.7)';
+  //   label.style.color = 'white';
+  //   document.getElementById('canvasContainer').appendChild(label);
+  // });
+
+  // // === 6. Обновление глобальных переменных ===
+  // horizontalLines = floorLines; // только этажи участвуют в группировке
+  // window.substageLines = substageLines.filter(line => 
+  //   !floorLines.some(green => Math.abs(green.y - line.y) <= 2)
+  // );
+
+  // // === 7. Отображение вертикальных линий (полноценные красные линии) ===
+  // verticalLines.forEach(line => {
+  //   ctx.strokeStyle = 'red';
+  //   ctx.lineWidth = 1;
+  //   ctx.beginPath();
+  //   ctx.moveTo(line.x, 0);
+  //   ctx.lineTo(line.x, canvas.height);
+  //   ctx.stroke();
+
+  //   const label = document.createElement('div');
+  //   label.className = 'debug-label';
+  //   label.textContent = 'break';
+  //   label.style.left = `${line.x + 10}px`;
+  //   label.style.top = `${canvas.height / 2}px`;
+  //   label.style.background = 'red';
+  //   label.style.color = 'white';
+  //   label.style.fontSize = '10px';
+  //   document.getElementById('canvasContainer').appendChild(label);
+  // });
+    // === 5. Перерисовка PDF и отрисовка линий (ОБРЕЗАННЫХ ПО ГРАНИЦАМ ТАБЛИЦЫ) ===
+    await currentPage.render({ canvasContext: ctx, viewport }).promise;
+
+// === ОПРЕДЕЛЕНИЕ ГРАНИЦ ТАБЛИЦЫ ===
+let tableTopY = 0;
+let tableBottomY = canvas.height;
+let tableLeftX = 0;
+let tableRightX = canvas.width;
+
+if (floorLines.length > 0) {
+  const sortedFloors = [...floorLines].sort((a, b) => a.y - b.y);
+  tableTopY = sortedFloors[0].y;
+  tableBottomY = sortedFloors[sortedFloors.length - 1].y;
+}
+
+if (verticalLines.length > 0) {
+  const sortedVerticals = [...verticalLines].sort((a, b) => a.x - b.x);
+  tableLeftX = sortedVerticals[0].x;
+  tableRightX = sortedVerticals[sortedVerticals.length - 1].x;
+}
+
+// === Зелёные линии (этажи) — рисуем ТОЛЬКО между крайними вертикальными линиями ===
+ctx.strokeStyle = '#00ff00';
+ctx.lineWidth = 2;
+floorLines.forEach(line => {
+  const startX = Math.max(line.startX, tableLeftX);
+  const endX = Math.min(line.endX, tableRightX);
+  if (endX > startX) {
     ctx.beginPath();
-    ctx.moveTo(line.startX, line.y);
-    ctx.lineTo(line.endX, line.y);
+    ctx.moveTo(startX, line.y);
+    ctx.lineTo(endX, line.y);
     ctx.stroke();
-    const label = document.createElement('div');
-    label.className = 'debug-label line-label';
-    label.textContent = `Y=${Math.round(line.y)}`;
-    label.style.left = `${line.startX + 10}px`;
-    label.style.top = `${line.y}px`;
-    document.getElementById('canvasContainer').appendChild(label);
-  });
+  }
 
-  // Оранжевые (субэтапы)
-  ctx.strokeStyle = '#ff9800';
+  const label = document.createElement('div');
+  label.className = 'debug-label line-label';
+  label.textContent = `Y=${Math.round(line.y)}`;
+  label.style.left = `${startX + 10}px`;
+  label.style.top = `${line.y}px`;
+  document.getElementById('canvasContainer').appendChild(label);
+});
+
+// === Оранжевые линии (субэтапы) — тоже обрезаем по ширине таблицы ===
+ctx.strokeStyle = '#ff9800';
+ctx.lineWidth = 1;
+substageLines.forEach(line => {
+  const isOverlappingGreen = floorLines.some(green => Math.abs(green.y - line.y) <= 2);
+  if (isOverlappingGreen) return;
+
+  const startX = Math.max(line.startX, tableLeftX);
+  const endX = Math.min(line.endX, tableRightX);
+  if (endX > startX) {
+    ctx.beginPath();
+    ctx.moveTo(startX, line.y);
+    ctx.lineTo(endX, line.y);
+    ctx.stroke();
+  }
+
+  const label = document.createElement('div');
+  label.className = 'debug-label line-label';
+  label.textContent = `sub Y=${Math.round(line.y)}`;
+  label.style.left = `${startX + 10}px`;
+  label.style.top = `${line.y}px`;
+  label.style.background = 'rgba(255, 152, 0, 0.7)';
+  label.style.color = 'white';
+  document.getElementById('canvasContainer').appendChild(label);
+});
+
+// === Красные вертикальные линии — рисуем ТОЛЬКО между первой и последней зелёной линией ===
+verticalLines.forEach(line => {
+  ctx.strokeStyle = 'red';
   ctx.lineWidth = 1;
-  substageLines.forEach(line => {
-    // Исключаем фрагменты зелёных линий (по Y)
-    const isOverlappingGreen = floorLines.some(green => Math.abs(green.y - line.y) <= 2);
-    if (isOverlappingGreen) return;
-
+  const topY = tableTopY;
+  const bottomY = tableBottomY;
+  if (bottomY > topY) {
     ctx.beginPath();
-    ctx.moveTo(line.startX, line.y);
-    ctx.lineTo(line.endX, line.y);
+    ctx.moveTo(line.x, topY);
+    ctx.lineTo(line.x, bottomY);
     ctx.stroke();
-    const label = document.createElement('div');
-    label.className = 'debug-label line-label';
-    label.textContent = `sub Y=${Math.round(line.y)}`;
-    label.style.left = `${line.startX + 10}px`;
-    label.style.top = `${line.y}px`;
-    label.style.background = 'rgba(255, 152, 0, 0.7)';
-    label.style.color = 'white';
-    document.getElementById('canvasContainer').appendChild(label);
-  });
+  }
 
-  // === 6. Обновление глобальных переменных ===
-  horizontalLines = floorLines; // только этажи участвуют в группировке
-  window.substageLines = substageLines.filter(line => 
-    !floorLines.some(green => Math.abs(green.y - line.y) <= 2)
-  );
+  const label = document.createElement('div');
+  label.className = 'debug-label';
+  label.textContent = 'break';
+  label.style.left = `${line.x + 10}px`;
+  label.style.top = `${(topY + bottomY) / 2}px`;
+  label.style.background = 'red';
+  label.style.color = 'white';
+  label.style.fontSize = '10px';
+  document.getElementById('canvasContainer').appendChild(label);
+});
 
-  // === 7. Отображение вертикальных линий (полноценные красные линии) ===
-  verticalLines.forEach(line => {
-    ctx.strokeStyle = 'red';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(line.x, 0);
-    ctx.lineTo(line.x, canvas.height);
-    ctx.stroke();
-
-    const label = document.createElement('div');
-    label.className = 'debug-label';
-    label.textContent = 'break';
-    label.style.left = `${line.x + 10}px`;
-    label.style.top = `${canvas.height / 2}px`;
-    label.style.background = 'red';
-    label.style.color = 'white';
-    label.style.fontSize = '10px';
-    document.getElementById('canvasContainer').appendChild(label);
-  });
+// === 6. Обновление глобальных переменных ===
+horizontalLines = floorLines;
+window.substageLines = substageLines.filter(line => 
+  !floorLines.some(green => Math.abs(green.y - line.y) <= 2)
+);
 
   // === 8. Обновление структуры строк ===
   const blocks = currentTextContent.items
@@ -1075,21 +1204,25 @@ for (let row of structuredRows) {
   return html;
 }
 
-
 function drawFloorHighlight(floor) {
   // Удаляем старую рамку
   const oldBox = document.querySelector('.highlight-box');
   if (oldBox) oldBox.remove();
-
   if (!floor) return;
 
-  // Координаты линий этажа
+  // Координаты по вертикали — как раньше
   const topLineY = floor.topLine ? floor.topLine.y : 0;
   const bottomLineY = floor.bottomLine ? floor.bottomLine.y : canvas.height;
 
-  // Ширина — вся ширина canvas
-  const leftX = 0;
-  const rightX = canvas.width;
+  // === ШИРИНА: только между первой и последней колонкой ===
+  let leftX = 0;
+  let rightX = canvas.width;
+
+  if (window.columnBounds && window.columnBounds.length > 0) {
+    // Берём самую левую и самую правую границы колонок
+    leftX = window.columnBounds[0].left;
+    rightX = window.columnBounds[window.columnBounds.length - 1].right;
+  }
 
   const box = document.createElement('div');
   box.className = 'highlight-box';
@@ -1097,8 +1230,36 @@ function drawFloorHighlight(floor) {
   box.style.top = `${topLineY}px`;
   box.style.width = `${rightX - leftX}px`;
   box.style.height = `${bottomLineY - topLineY}px`;
+  box.style.border = '2px solid #3498db'; // синяя рамка
+  box.style.pointerEvents = 'none';
+  box.style.position = 'absolute';
+  box.style.zIndex = '2000';
   document.getElementById('canvasContainer').appendChild(box);
 }
+
+// function drawFloorHighlight(floor) {
+//   // Удаляем старую рамку
+//   const oldBox = document.querySelector('.highlight-box');
+//   if (oldBox) oldBox.remove();
+
+//   if (!floor) return;
+
+//   // Координаты линий этажа
+//   const topLineY = floor.topLine ? floor.topLine.y : 0;
+//   const bottomLineY = floor.bottomLine ? floor.bottomLine.y : canvas.height;
+
+//   // Ширина — вся ширина canvas
+//   const leftX = 0;
+//   const rightX = canvas.width;
+
+//   const box = document.createElement('div');
+//   box.className = 'highlight-box';
+//   box.style.left = `${leftX}px`;
+//   box.style.top = `${topLineY}px`;
+//   box.style.width = `${rightX - leftX}px`;
+//   box.style.height = `${bottomLineY - topLineY}px`;
+//   document.getElementById('canvasContainer').appendChild(box);
+// }
     
  
     document.getElementById('prevFloor').addEventListener('click', () => {
@@ -1145,95 +1306,369 @@ document.getElementById('closeHtmlOverlay').addEventListener('click', () => {
   document.getElementById('htmlOverlay').style.display = 'none';
 });
   
+// let isSelecting = false;
+// let startX = 0;
+// let startY = 0;
+// const selectionRect = document.getElementById('selectionRect');
+// const canvasContainer = document.getElementById('canvasContainer');
+
 let isSelecting = false;
 let startX = 0;
 let startY = 0;
-const selectionRect = document.getElementById('selectionRect');
 const canvasContainer = document.getElementById('canvasContainer');
 
-document.getElementById('enableSelectMode').addEventListener('click', () => {
-  isSelecting = true;
-  document.getElementById('status').textContent = 'Выделите область на PDF...';
-});
+// Универсальная функция получения координат относительно canvasContainer
+function getCoords(e) {
+  const rect = canvasContainer.getBoundingClientRect();
+  let clientX, clientY;
 
-canvasContainer.addEventListener('mousedown', (e) => {
+  if (e.type.startsWith('touch')) {
+    const touch = e.touches[0] || e.changedTouches[0];
+    clientX = touch.clientX;
+    clientY = touch.clientY;
+  } else {
+    clientX = e.clientX;
+    clientY = e.clientY;
+  }
+
+  return {
+    x: clientX - rect.left,
+    y: clientY - rect.top
+  };
+}
+
+// Начало выделения
+function startSelection(e) {
   if (!isSelecting || !currentTextContent) return;
   
-  const rect = canvasContainer.getBoundingClientRect();
-  startX = e.clientX - rect.left;
-  startY = e.clientY - rect.top;
+  e.preventDefault();
 
-  // Получаем selectionRect ТОЛЬКО КОГДА НУЖЕН — и точно после загрузки DOM
+  const { x, y } = getCoords(e);
+  startX = x;
+  startY = y;
+
   const selectionRect = document.getElementById('selectionRect');
-  selectionRect.style.display = 'block';
-  selectionRect.style.left = startX + 'px';
-  selectionRect.style.top = startY + 'px';
-  selectionRect.style.width = '0px';
-  selectionRect.style.height = '0px';
-});
+  if (selectionRect) {
+    selectionRect.style.display = 'block';
+    selectionRect.style.left = startX + 'px';
+    selectionRect.style.top = startY + 'px';
+    selectionRect.style.width = '0px';
+    selectionRect.style.height = '0px';
+  }
+}
 
-canvasContainer.addEventListener('mousemove', (e) => {
+// Движение при выделении
+function moveSelection(e) {
   if (!isSelecting) return;
   
-  const rect = canvasContainer.getBoundingClientRect();
-  const currentX = e.clientX - rect.left;
-  const currentY = e.clientY - rect.top;
-  
+  e.preventDefault();
+
+  const { x, y } = getCoords(e);
+  const currentX = x;
+  const currentY = y;
+
   const width = currentX - startX;
   const height = currentY - startY;
 
   const selectionRect = document.getElementById('selectionRect');
-  selectionRect.style.left = Math.min(startX, currentX) + 'px';
-  selectionRect.style.top = Math.min(startY, currentY) + 'px';
-  selectionRect.style.width = Math.abs(width) + 'px';
-  selectionRect.style.height = Math.abs(height) + 'px';
-});
+  if (selectionRect) {
+    selectionRect.style.left = Math.min(startX, currentX) + 'px';
+    selectionRect.style.top = Math.min(startY, currentY) + 'px';
+    selectionRect.style.width = Math.abs(width) + 'px';
+    selectionRect.style.height = Math.abs(height) + 'px';
+  }
+}
 
-canvasContainer.addEventListener('mouseup', async (e) => {
+// Завершение выделения
+async function endSelection(e) {
   if (!isSelecting) return;
   
+  e.preventDefault();
+
   isSelecting = false;
   const selectionRect = document.getElementById('selectionRect');
-  selectionRect.style.display = 'none';
+  if (selectionRect) {
+    selectionRect.style.display = 'none';
+  }
 
-  const rect = canvasContainer.getBoundingClientRect();
-  const endX = e.clientX - rect.left;
-  const endY = e.clientY - rect.top;
+  const { x: endX, y: endY } = getCoords(e);
 
   const selLeft = Math.min(startX, endX);
   const selTop = Math.min(startY, endY);
   const selRight = Math.max(startX, endX);
   const selBottom = Math.max(startY, endY);
 
-  let html = '';
-  currentTextContent.items.forEach(item => {
-    if (!item.str.trim()) return;
-    const [,, , , x, y] = item.transform;
-    const pt = viewport.convertToViewportPoint(x, y);
-    const tx = pt[0];
-    const ty = pt[1];
-    
-    if (tx >= selLeft && tx <= selRight && ty >= selTop && ty <= selBottom) {
-      // Теперь текст сохраняется с правильными координатами!
-      html += `<div style="position:absolute; left:${tx}px; top:${ty}px; white-space:nowrap;">${item.str.trim()}</div>`;
+  // Проверка наличия данных
+  if (!currentTextContent || !viewport) {
+    document.getElementById('status').textContent = '⚠️ Нет данных PDF';
+    return;
+  }
+
+  // Получаем все текстовые блоки с координатами
+  const allBlocks = currentTextContent.items
+    .filter(item => item.str.trim())
+    .map(item => {
+      const [,, , , x, y] = item.transform;
+      const pt = viewport.convertToViewportPoint(x, y);
+      return { 
+        text: item.str.trim(), 
+        x: pt[0], 
+        y: pt[1] 
+      };
+    });
+
+  // Если нет таблицы — простое выделение
+  if (!horizontalLines || horizontalLines.length === 0 || !window.columnBounds) {
+    let html = '';
+    allBlocks.forEach(block => {
+      if (
+        block.x >= selLeft && block.x <= selRight &&
+        block.y >= selTop && block.y <= selBottom
+      ) {
+        const safeText = block.text
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '<')
+          .replace(/>/g, '>');
+        html += `<div style="position:absolute; left:${block.x}px; top:${block.y}px; white-space:nowrap; border:1px solid #ccc; padding:2px 4px;">${safeText}</div>`;
+      }
+    });
+
+    if (html) {
+      const fullHtml = `<div style="position:relative; width:${viewport.width}px; height:${viewport.height}px; background:white; font-family:Arial,sans-serif;">${html}</div>`;
+      try {
+        await navigator.clipboard.writeText(fullHtml);
+        // document.getElementById('status').textContent = '✅ Выделение скопировано!';
+        const msg = '✅ Выделение скопировано!';
+document.getElementById('status').textContent = msg;
+showNotification(msg);
+      } catch (err) {
+        console.error(err);
+        document.getElementById('status').textContent = '❌ Ошибка копирования';
+      }
+    } else {
+      document.getElementById('status').textContent = '⚠️ Ничего не выделено';
     }
+    return;
+  }
+
+  // Границы таблицы
+  const sortedLines = [...horizontalLines].sort((a, b) => a.y - b.y);
+  const tableTop = sortedLines[0].y;
+  const tableBottom = sortedLines.at(-1).y;
+
+  // Проверяем, пересекается ли выделение с таблицей
+  const intersectsTable = !(selBottom < tableTop || selTop > tableBottom);
+  if (!intersectsTable) {
+    // Внетабличное выделение
+    let html = '';
+    allBlocks.forEach(block => {
+      if (
+        block.x >= selLeft && block.x <= selRight &&
+        block.y >= selTop && block.y <= selBottom
+      ) {
+        const safeText = block.text
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '<')
+          .replace(/>/g, '>');
+        html += `<div style="position:absolute; left:${block.x}px; top:${block.y}px; white-space:nowrap; border:1px solid #ccc; padding:2px 4px;">${safeText}</div>`;
+      }
+    });
+
+    if (html) {
+      const fullHtml = `<div style="position:relative; width:${viewport.width}px; height:${viewport.height}px; background:white; font-family:Arial,sans-serif;">${html}</div>`;
+      // try {
+      //   await navigator.clipboard.writeText(fullHtml);
+      //   document.getElementById('status').textContent = '✅ Внетабличное выделение скопировано!';
+      try {
+  await navigator.clipboard.writeText(fullHtml);
+  const msg = '✅ Внетабличное выделение скопировано!';
+  document.getElementById('status').textContent = msg;
+  showNotification(msg);
+      } catch (err) {
+        console.error(err);
+        document.getElementById('status').textContent = '❌ Ошибка копирования';
+      }
+    } else {
+      document.getElementById('status').textContent = '⚠️ Ничего не выделено';
+    }
+    return;
+  }
+
+  // === Структурированное выделение внутри таблицы ===
+  const selectedBlocks = allBlocks.filter(b =>
+    b.x >= selLeft && b.x <= selRight &&
+    b.y >= selTop && b.y <= selBottom &&
+    b.y >= tableTop && b.y <= tableBottom
+  );
+
+  if (selectedBlocks.length === 0) {
+    document.getElementById('status').textContent = '⚠️ Нет текста в выделенной области';
+    return;
+  }
+
+  // Определяем затронутые строки
+  const rowBounds = [];
+  for (let i = 0; i < sortedLines.length; i++) {
+    const top = i === 0 ? tableTop : sortedLines[i - 1].y;
+    const bottom = sortedLines[i].y;
+    if (!(bottom < selTop || top > selBottom)) {
+      rowBounds.push({ top, bottom, index: i });
+    }
+  }
+
+  // Определяем затронутые колонки
+  const colBounds = window.columnBounds.filter(col =>
+    !(col.right < selLeft || col.left > selRight)
+  ).map(col => ({
+    ...col,
+    originalIndex: window.columnBounds.indexOf(col)
+  }));
+
+  if (rowBounds.length === 0 || colBounds.length === 0) {
+    document.getElementById('status').textContent = '⚠️ Выделение не попало в ячейки таблицы';
+    return;
+  }
+
+  // Распределяем блоки по ячейкам
+  const cells = [];
+  rowBounds.forEach(rowBound => {
+    colBounds.forEach(colBound => {
+      const blocksInCell = selectedBlocks.filter(b =>
+        b.x >= colBound.left && b.x < colBound.right &&
+        b.y >= rowBound.top && b.y < rowBound.bottom
+      ).sort((a, b) => a.y - b.y);
+
+      cells.push({
+        rowIndex: rowBound.index,
+        colIndex: colBound.originalIndex,
+        blocks: blocksInCell
+      });
+    });
   });
 
-  if (html) {
-    // Оборачиваем в контейнер — чтобы при вставке всё было на своих местах
-    const fullHtml = `<div style="position:relative; width:${viewport.width}px; height:${viewport.height}px; background:white;">${html}</div>`;
-    try {
-      await navigator.clipboard.writeText(fullHtml);
-      document.getElementById('status').textContent = '✅ Простое выделение скопировано!';
-    } catch (err) {
-      console.error(err);
-      document.getElementById('status').textContent = '❌ Ошибка копирования';
-    }
-  } else {
-    document.getElementById('status').textContent = '⚠️ Ничего не выделено';
+  // Генерация HTML
+  let html = `<div style="position: relative; width: ${viewport.width}px; height: ${viewport.height}px; background: white; font-family: Arial, sans-serif;">\n`;
+
+  // Внетабличные блоки внутри выделения (редко, но возможно)
+  const outsideBlocks = allBlocks.filter(b =>
+    b.x >= selLeft && b.x <= selRight &&
+    b.y >= selTop && b.y <= selBottom &&
+    (b.y < tableTop || b.y > tableBottom)
+  );
+  outsideBlocks.forEach(block => {
+    const safeText = block.text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '<')
+      .replace(/>/g, '>');
+    html += `  <div style="position: absolute; left: ${block.x}px; top: ${block.y}px; white-space: nowrap; border: 1px solid #ccc; padding: 2px 4px;">${safeText}</div>\n`;
+  });
+
+  // Таблица
+  const tableTopY = rowBounds[0].top;
+  html += `  <table style="position: absolute; left: 0; top: ${tableTopY}px; border-collapse: collapse; width: ${viewport.width}px;">\n`;
+
+  const uniqueRowIndices = [...new Set(rowBounds.map(r => r.index))].sort((a, b) => a - b);
+  const uniqueColIndices = [...new Set(colBounds.map(c => c.originalIndex))].sort((a, b) => a - b);
+
+  uniqueRowIndices.forEach(rowIndex => {
+    html += `    <tr>\n`;
+    uniqueColIndices.forEach(colIndex => {
+      const cell = cells.find(c => c.rowIndex === rowIndex && c.colIndex === colIndex);
+      const content = cell?.blocks.map(b =>
+        `<div style="margin: 1px 0; line-height: 1.3;">${b.text.replace(/&/g, '&amp;').replace(/</g, '<').replace(/>/g, '>')}</div>`
+      ).join('') || '';
+
+      html += `      <td style="border: 1px solid #ddd; background: rgba(230, 245, 255, 0.4); padding: 6px; vertical-align: top; min-width: 80px;">
+        ${content}
+      </td>\n`;
+    });
+    html += `    </tr>\n`;
+  });
+
+  html += `  </table>\n</div>`;
+
+  // Копирование результата
+    // ... (всё, что было до копирования)
+
+  // === ПОКАЗ УВЕДОМЛЕНИЯ И КОПИРОВАНИЕ ===
+  function showNotification(message) {
+    // Удаляем старое уведомление, если есть
+    const old = document.querySelector('.copy-notification');
+    if (old) old.remove();
+
+    const notification = document.createElement('div');
+    notification.className = 'copy-notification';
+    notification.textContent = message;
+    document.body.appendChild(notification);
+
+    // Показываем
+    setTimeout(() => {
+      notification.classList.add('show');
+    }, 10);
+
+    // Убираем через 2.5 секунды
+    setTimeout(() => {
+      notification.classList.remove('show');
+      setTimeout(() => {
+        if (notification.parentNode) {
+          notification.parentNode.removeChild(notification);
+        }
+      }, 300);
+    }, 2500);
   }
+
+  try {
+    await navigator.clipboard.writeText(html);
+    const msg = `✅ Таблица (${uniqueRowIndices.length}×${uniqueColIndices.length}) скопирована!`;
+    document.getElementById('status').textContent = msg;
+    showNotification(msg);
+  } catch (err) {
+    console.error(err);
+    const fallbackMsg = '✅ Сохранено как selection-structured.html';
+    document.getElementById('status').textContent = fallbackMsg;
+    showNotification(fallbackMsg);
+
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'selection-structured.html';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+  // try {
+  //   await navigator.clipboard.writeText(html);
+  //   document.getElementById('status').textContent = `✅ Таблица (${uniqueRowIndices.length}×${uniqueColIndices.length}) скопирована!`;
+  // } catch (err) {
+  //   console.error(err);
+  //   const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  //   const url = URL.createObjectURL(blob);
+  //   const a = document.createElement('a');
+  //   a.href = url;
+  //   a.download = 'selection-structured.html';
+  //   a.click();
+  //   URL.revokeObjectURL(url);
+  //   document.getElementById('status').textContent = '✅ Сохранено как selection-structured.html';
+  // }
+}
+
+// Подписка на события мыши
+canvasContainer.addEventListener('mousedown', startSelection);
+canvasContainer.addEventListener('mousemove', moveSelection);
+canvasContainer.addEventListener('mouseup', endSelection);
+
+// Подписка на события касания (смартфоны)
+canvasContainer.addEventListener('touchstart', startSelection, { passive: false });
+canvasContainer.addEventListener('touchmove', moveSelection, { passive: false });
+canvasContainer.addEventListener('touchend', endSelection, { passive: false });
+
+// Кнопка включения режима выделения
+document.getElementById('enableSelectMode').addEventListener('click', () => {
+  isSelecting = true;
+  document.getElementById('status').textContent = 'Выделите область на PDF...';
 });
-// =============== НОВЫЙ РЕЖИМ: РЕГИОНЫ (ТОЛЬКО В БУФЕР, БЕЗ ОКНА) ===============
+
+
 
 let isNewRegionMode = false;
 let newRegions = [];
