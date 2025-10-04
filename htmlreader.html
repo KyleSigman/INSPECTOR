@@ -142,7 +142,7 @@
 <!-- Подключаем Firebase SDK (compat mode) -->
 <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-database-compat.js"></script>
-
+<script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore-compat.js"></script>
 <script>
   // Твой Firebase конфиг
   const firebaseConfig = {
@@ -157,7 +157,7 @@
 
   // Инициализация
   firebase.initializeApp(firebaseConfig);
-
+  const firestore = firebase.firestore();
   // Получаем доступ к Realtime Database
   const db = firebase.database();
 
@@ -222,6 +222,57 @@ font-size: 14px;
   style="width: 150px; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px;"
 />
 </div>
+
+<!-- Кнопка переключения сниппетов на главном экране -->
+<!-- <button id="snippet-toggle-btn" title="Следующий сниппет" style="
+  position: fixed;
+  top: 100px;
+  right: 0px;
+  margin: 5px;
+  z-index: 100;
+  background: #5c5c5c;
+  color: white;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 16px;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+">1/3</button>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const toggleBtn = document.getElementById('toggle-btn');
+    const snippetToggleBtn = document.getElementById('snippet-toggle-btn');
+
+    // Обновляем текст кнопки при смене сниппета (извне)
+    window.updateSnippetIndicator = (index) => {
+      if (snippetToggleBtn) {
+        snippetToggleBtn.textContent = `${index + 1}/${TOTAL_SNIPPETS}`;
+      }
+    };
+
+    // Инициализация
+    updateSnippetIndicator(currentSnippetIndex);
+
+    // Переключение по клику
+    snippetToggleBtn?.addEventListener('click', () => {
+      saveCurrentSnippet();
+      currentSnippetIndex = (currentSnippetIndex + 1) % TOTAL_SNIPPETS;
+      loadSnippet(currentSnippetIndex);
+      updateSnippetIndicator(currentSnippetIndex);
+      // Обновляем и в панели, если она открыта
+      const panelIndicator = document.getElementById('snippet-indicator');
+      if (panelIndicator) {
+        panelIndicator.textContent = `${currentSnippetIndex + 1}/${TOTAL_SNIPPETS}`;
+      }
+    });
+  });
+</script> -->
 
 <script>
   const usernameInput = document.getElementById('username-input');
@@ -1249,6 +1300,249 @@ document.body.appendChild(clearChatBtn);
     editorHeader.insertBefore(clearAllBtn, closeBtn);
   });
 </script>
+
+<script>
+  // === ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ===
+  let currentSnippetIndex = 0;
+  const TOTAL_SNIPPETS = 3;
+  const snippetsRef = db.ref('livehtml/snippets');
+  const currentSnippetIndexRef = db.ref('livehtml/currentSnippetIndex');
+
+  // === ФУНКЦИИ ===
+  function loadSnippet(index) {
+    snippetsRef.child(index.toString()).once('value').then(snapshot => {
+      const code = snapshot.val() || '';
+      codeEl.value = code;
+      updatePreview();
+      updateAllIndicators(); // обновляем ВСЁ после загрузки
+    });
+  }
+
+  function saveCurrentSnippet() {
+    snippetsRef.child(currentSnippetIndex.toString()).set(codeEl.value);
+    currentSnippetIndexRef.set(currentSnippetIndex);
+  }
+
+  function updateAllIndicators() {
+    const text = `${currentSnippetIndex + 1}/${TOTAL_SNIPPETS}`;
+    // На главном экране
+    const mainBtn = document.getElementById('snippet-toggle-btn');
+    if (mainBtn) mainBtn.textContent = text;
+    // В панели редактора
+    const panelNum = document.getElementById('snippet-number');
+    if (panelNum) panelNum.textContent = text;
+  }
+
+  function nextSnippet() {
+    saveCurrentSnippet();
+    currentSnippetIndex = (currentSnippetIndex + 1) % TOTAL_SNIPPETS;
+    loadSnippet(currentSnippetIndex);
+  }
+
+  // === ИНИЦИАЛИЗАЦИЯ ПОСЛЕ ЗАГРУЗКИ DOM ===
+  document.addEventListener('DOMContentLoaded', () => {
+    // --- 1. КНОПКА НА ГЛАВНОМ ЭКРАНЕ ---
+    const mainBtn = document.createElement('button');
+    mainBtn.id = 'snippet-toggle-btn';
+    mainBtn.title = 'Следующий сниппет';
+    mainBtn.style.cssText = `
+      position: fixed; top: 100px; right: 0px; margin: 5px; z-index: 100;
+      background: #5c5c5c; color: white; border: none; width: 40px; height: 40px;
+      border-radius: 50%; font-size: 16px; cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      display: flex; align-items: center; justify-content: center;
+    `;
+    mainBtn.addEventListener('click', nextSnippet);
+    document.body.appendChild(mainBtn);
+
+    // --- 2. ЭЛЕМЕНТЫ В ПАНЕЛИ РЕДАКТОРА ---
+    const editorHeader = document.getElementById('editor-header');
+    const closeBtn = document.getElementById('close-btn');
+
+    let panelNumberEl = null;
+    if (editorHeader && closeBtn) {
+      // Индикатор
+      panelNumberEl = document.createElement('span');
+      panelNumberEl.id = 'snippet-number';
+      panelNumberEl.style.cssText = `
+        color: #66c0f4; font-size: 13px; font-weight: bold;
+        min-width: 36px; text-align: center; margin: 0 6px;
+        align-self: center; pointer-events: none;
+      `;
+
+      // Кнопки
+      const prevBtn = document.createElement('button');
+      prevBtn.textContent = '←';
+      prevBtn.style.cssText = `
+        width: 26px; height: 26px; border: none; background: transparent;
+        color: #66c0f4; font-size: 14px; cursor: pointer; border-radius: 4px;
+        display: flex; align-items: center; justify-content: center;
+      `;
+      prevBtn.addEventListener('click', () => {
+        saveCurrentSnippet();
+        currentSnippetIndex = (currentSnippetIndex - 1 + TOTAL_SNIPPETS) % TOTAL_SNIPPETS;
+        loadSnippet(currentSnippetIndex);
+      });
+
+      const nextBtn = document.createElement('button');
+      nextBtn.textContent = '→';
+      nextBtn.style.cssText = `
+        width: 26px; height: 26px; border: none; background: transparent;
+        color: #66c0f4; font-size: 14px; cursor: pointer; border-radius: 4px;
+        display: flex; align-items: center; justify-content: center;
+      `;
+      nextBtn.addEventListener('click', nextSnippet);
+
+      // Вставка в заголовок
+      editorHeader.insertBefore(prevBtn, closeBtn);
+      editorHeader.insertBefore(panelNumberEl, closeBtn);
+      editorHeader.insertBefore(nextBtn, closeBtn);
+    }
+
+    // --- 3. ЗАГРУЗКА ПОСЛЕДНЕГО СНИППЕТА ---
+    currentSnippetIndexRef.once('value').then(snapshot => {
+      const savedIndex = snapshot.val();
+      if (typeof savedIndex === 'number' && savedIndex >= 0 && savedIndex < TOTAL_SNIPPETS) {
+        currentSnippetIndex = savedIndex;
+      }
+      loadSnippet(currentSnippetIndex); // вызовет updateAllIndicators()
+    });
+  });
+</script>
+
+<!-- <script>
+  // === МУЛЬТИ-СНИППЕТЫ (3 слота) ===
+  let currentSnippetIndex = 0;
+  const TOTAL_SNIPPETS = 3;
+  const snippetsRef = db.ref('livehtml/snippets');
+  const currentSnippetIndexRef = db.ref('livehtml/currentSnippetIndex');
+
+  currentSnippetIndexRef.once('value').then(snapshot => {
+    const savedIndex = snapshot.val();
+    if (typeof savedIndex === 'number' && savedIndex >= 0 && savedIndex < TOTAL_SNIPPETS) {
+      currentSnippetIndex = savedIndex;
+    }
+    loadSnippet(currentSnippetIndex);
+  });
+
+  function loadSnippet(index) {
+    snippetsRef.child(index.toString()).once('value').then(snapshot => {
+      const code = snapshot.val() || '';
+      codeEl.value = code;
+      updatePreview();
+    });
+  }
+
+  function saveCurrentSnippet() {
+    snippetsRef.child(currentSnippetIndex.toString()).set(codeEl.value);
+    currentSnippetIndexRef.set(currentSnippetIndex);
+  }
+
+  // === КНОПКИ И НОМЕР ТОЛЬКО В ПАНЕЛИ ===
+  document.addEventListener('DOMContentLoaded', () => {
+    const editorHeader = document.getElementById('editor-header');
+    const closeBtn = document.getElementById('close-btn');
+
+    if (!editorHeader || !closeBtn) return;
+
+    // Индикатор номера
+    const snippetNumber = document.createElement('span');
+    snippetNumber.id = 'snippet-number';
+    snippetNumber.textContent = `${currentSnippetIndex + 1}/${TOTAL_SNIPPETS}`;
+    snippetNumber.style.cssText = `
+      color: #66c0f4;
+      font-size: 13px;
+      font-weight: bold;
+      min-width: 36px;
+      text-align: center;
+      margin: 0 6px;
+      align-self: center;
+      pointer-events: none;
+    `;
+
+    // Кнопки ← →
+    const prevBtn = document.createElement('button');
+    prevBtn.textContent = '←';
+    prevBtn.style.cssText = `
+      width: 26px; height: 26px; border: none; background: transparent;
+      color: #66c0f4; font-size: 14px; cursor: pointer; border-radius: 4px;
+      display: flex; align-items: center; justify-content: center;
+    `;
+    prevBtn.addEventListener('click', () => {
+      saveCurrentSnippet();
+      currentSnippetIndex = (currentSnippetIndex - 1 + TOTAL_SNIPPETS) % TOTAL_SNIPPETS;
+      loadSnippet(currentSnippetIndex);
+      snippetNumber.textContent = `${currentSnippetIndex + 1}/${TOTAL_SNIPPETS}`;
+    });
+
+    const nextBtn = document.createElement('button');
+    nextBtn.textContent = '→';
+    nextBtn.style.cssText = `
+      width: 26px; height: 26px; border: none; background: transparent;
+      color: #66c0f4; font-size: 14px; cursor: pointer; border-radius: 4px;
+      display: flex; align-items: center; justify-content: center;
+    `;
+    nextBtn.addEventListener('click', () => {
+      saveCurrentSnippet();
+      currentSnippetIndex = (currentSnippetIndex + 1) % TOTAL_SNIPPETS;
+      loadSnippet(currentSnippetIndex);
+      snippetNumber.textContent = `${currentSnippetIndex + 1}/${TOTAL_SNIPPETS}`;
+    });
+
+    // Вставляем: ←, номер, → — перед кнопкой закрытия
+    editorHeader.insertBefore(prevBtn, closeBtn);
+    editorHeader.insertBefore(snippetNumber, closeBtn);
+    editorHeader.insertBefore(nextBtn, closeBtn);
+  });
+</script> -->
+
+<!-- Кнопка "Сохранить в MyKits (Firestore)" -->
+<button id="save-kit-btn" title="Сохранить в MyKits" style="
+  position: fixed;
+  top: 150px;
+  right: 0px;
+  margin: 5px;
+  z-index: 100;
+  background: #5c5c5c;
+  color: white;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 18px;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+">💾</button>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const saveKitBtn = document.getElementById('save-kit-btn');
+    if (!saveKitBtn || typeof firebase.firestore !== 'function') return;
+
+    saveKitBtn.addEventListener('click', async () => {
+      const userId = (window.userName || '').trim() || 'anonymous';
+      const kitName = prompt('Название сниппета:', 'Мой сниппет');
+      if (!kitName?.trim()) return;
+
+      try {
+        await firestore.collection('mykits').add({
+          userId: userId,
+          name: kitName.trim(),
+          code: codeEl.value,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        alert(`✅ Сниппет "${kitName}" сохранён в Firestore!`);
+      } catch (err) {
+        console.error('❌ Ошибка Firestore:', err);
+        alert('Не удалось сохранить в MyKits.');
+      }
+    });
+  });
+</script>
+
+
 </body>
 </html>
-
