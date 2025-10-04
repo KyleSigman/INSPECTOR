@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Kits — Превью</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #1e1e1e;
+      color: white;
+      padding: 20px;
+    }
+    h2 {
+      margin-bottom: 16px;
+    }
+    input {
+      padding: 10px 14px;
+      width: 220px;
+      border-radius: 6px;
+      border: 1px solid #444;
+      background: #2d2d2d;
+      color: white;
+      font-size: 15px;
+    }
+    .kit {
+      background: #252525;
+      border: 1px solid #3c3c3c;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+    .kit h3 {
+      margin-top: 0;
+      margin-bottom: 12px;
+      color: #66c0f4;
+      font-size: 17px;
+    }
+    .preview-container {
+      background: white;
+      border-radius: 6px;
+      overflow: hidden;
+      min-height: 80px;
+      box-shadow: inset 0 0 0 1px #eee;
+    }
+    .preview-frame {
+      width: 100%;
+      border: none;
+      background: white;
+      min-height: 150px;
+    }
+    .empty {
+      text-align: center;
+      padding: 20px;
+      color: #888;
+    }
+  </style>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+  <h2>Мои сниппеты</h2>
+  <input type="text" id="userIdInput" placeholder="Введите ваше имя" autocomplete="off" />
+
+  <div id="kits-container"></div>
+
+  <script>
+    // 🔑 Firebase config — тот же, что и в основном проекте
+    const firebaseConfig = {
+      apiKey: "AIzaSyCVr3ZztynpNzkeFY3aLKFN777oPunon4o",
+      authDomain: "inspector-24f9b.firebaseapp.com",
+      projectId: "inspector-24f9b",
+      storageBucket: "inspector-24f9b.firebasestorage.app",
+      messagingSenderId: "590955045913",
+      appId: "1:590955045913:web:164311eb98caeca7643688"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const firestore = firebase.firestore();
+
+    const userIdInput = document.getElementById('userIdInput');
+    const kitsContainer = document.getElementById('kits-container');
+
+    userIdInput.addEventListener('input', () => {
+      const userId = userIdInput.value.trim();
+      kitsContainer.innerHTML = userId ? '<div class="empty">Загрузка...</div>' : '';
+      if (userId) loadKits(userId);
+    });
+
+    async function loadKits(userId) {
+      try {
+        const snapshot = await firestore
+          .collection('mykits')
+          .where('userId', '==', userId)
+          .orderBy('createdAt', 'desc')
+          .get();
+
+        if (snapshot.empty) {
+          kitsContainer.innerHTML = '<div class="empty">Нет сохранённых сниппетов.</div>';
+          return;
+        }
+
+        let html = '';
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const name = data.name || 'Без названия';
+          const code = data.code || '';
+
+          // Экранируем кавычки для srcdoc
+          const safeCode = code
+            .replace(/</g, '<')
+            .replace(/>/g, '>')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+
+          html += `
+            <div class="kit">
+              <h3>${escapeHtml(name)}</h3>
+              <div class="preview-container">
+                <iframe class="preview-frame" srcdoc="${safeCode}"></iframe>
+              </div>
+            </div>
+          `;
+        });
+
+        kitsContainer.innerHTML = html;
+      } catch (err) {
+        console.error('Ошибка:', err);
+        kitsContainer.innerHTML = '<div class="empty" style="color:#ff6b6b">Ошибка загрузки. Проверьте индекс в Firestore.</div>';
+      }
+    }
+
+    function escapeHtml(text) {
+      const map = {
+        '&': '&amp;',
+        '<': '<',
+        '>': '>',
+        '"': '&quot;',
+        "'": '&#39;'
+      };
+      return text.replace(/[&<>"']/g, m => map[m]);
+    }
+  </script>
+</body>
+</html>
