@@ -23,14 +23,16 @@
       color: white;
       font-size: 15px;
     }
-    .kit {
-      background: #252525;
-      border: 1px solid #3c3c3c;
-      border-radius: 8px;
-      padding: 16px;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-    }
+  .kit {
+    background: #252525;
+    border: 1px solid #3c3c3c;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    width: 100%; /* ← растягиваем по ширине */
+    max-width: none; /* ← убираем ограничение */
+  }
     .kit h3 {
       margin-top: 0;
       margin-bottom: 12px;
@@ -44,12 +46,13 @@
       min-height: 80px;
       box-shadow: inset 0 0 0 1px #eee;
     }
-    .preview-frame {
-      width: 100%;
-      border: none;
-      background: white;
-      min-height: 150px;
-    }
+  .preview-frame {
+    width: 100%;
+    border: none;
+    background: white;
+    min-height: 200px; /* ← БЫЛО 150px, СТАЛО 200px (+50) */
+  }
+
     .empty {
       text-align: center;
       padding: 20px;
@@ -148,3 +151,4 @@
 </body>
 
 </html>
+
